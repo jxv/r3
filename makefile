@@ -1,5 +1,5 @@
 all:
-	gcc src/r3.c -c -o src/re.o -I./include -Wall -Werror -pedantic -std=c11 -ffast-math -g -O3 -lc -lm -lml -D_GNU_SOURCE
+	gcc src/r3.c -c -o src/re.o -I./include -Wall -Werror -pedantic -std=c11 -ffast-math -g -O3 -lml -lm -lc -D_GNU_SOURCE
 	ar rvs libr3.a src/re.o
 clean:
 	rm libr3.a src/re.o
