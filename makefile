@@ -1,8 +1,8 @@
 all:
-	gcc src/r3.c -c -o src/re.o -I./include -Wall -Werror -pedantic -std=c11 -ffast-math -g -O3 -lml -lm -lc -D_GNU_SOURCE
-	ar rvs libr3.a src/re.o
+	gcc src/r3.c -c -o src/r3.o -I./include -Wall -Werror -pedantic -std=c11 -ffast-math -g -O3 -lml -lm -lc -D_GNU_SOURCE
+	ar rvs libr3.a src/*.o
 clean:
-	rm libr3.a src/re.o
+	rm libr3.a src/*.o
 install:
 	cp include/*.h /usr/include
 	cp libr3.a /usr/lib/
