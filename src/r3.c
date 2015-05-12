@@ -3,16 +3,20 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <GLES2/gl2.h>
+#include <assert.h>
 
 char *load_file(const char *path) {
-    FILE *file = fopen(path, "rb");
-    fseek(file, 0, SEEK_END);
-    int length = ftell(file);
-    rewind(file);
-    char *data = calloc(length + 1, sizeof(char));
-    fread(data, 1, length, file);
-    fclose(file);
-    return data;
+	FILE *file = fopen(path, "rb");
+	fseek(file, 0, SEEK_END);
+	int length = ftell(file);
+	rewind(file);
+	char *data = calloc(length + 1, sizeof(char));
+	if (fread(data, 1, length, file) == 0) {
+		free(data);
+		return NULL;
+	}
+	fclose(file);
+	return data;
 }
 
 unsigned int make_shader(GLenum type, const char *source) {
@@ -34,6 +38,7 @@ unsigned int make_shader(GLenum type, const char *source) {
 
 unsigned int load_shader(const char *path, GLenum type) {
 	char *data = load_file(path);
+	assert(data != NULL);
 	unsigned int result = make_shader(type, data);
 	free(data);
 	return result;
