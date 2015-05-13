@@ -82,10 +82,10 @@ static const float box_positions[4 * 6][3] = {
 };
 
 static const float box_normals[4 * 6][3] = {
-	{ 1, 0, 0}, { 1, 0, 0}, { 1, 0, 0}, { 1, 0, 0}, 
+	{ 1, 0, 0}, { 1, 0, 0}, { 1, 0, 0}, { 1, 0, 0},
 	{ 0, 1, 0}, { 0, 1, 0}, { 0, 1, 0}, { 0, 1, 0},
 	{ 0, 0, 1}, { 0, 0, 1}, { 0, 0, 1}, { 0, 0, 1},
-	{-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}, 
+	{-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0},
 	{ 0,-1, 0}, { 0,-1, 0}, { 0,-1, 0}, { 0,-1, 0},
 	{ 0, 0,-1}, { 0, 0,-1}, { 0, 0,-1}, { 0, 0,-1},
 };
@@ -124,9 +124,9 @@ struct r3_mesh_spec r3_box_ctor(v3f dimen) {
 		const int c = 2 + i * 4;
 		const int d = 3 + i * 4;
 		spec.indices[j + 0] = _v3ui(a, b, c);
-		spec.indices[j + 1] = _v3ui(c, d, a); 
+		spec.indices[j + 1] = _v3ui(c, d, a);
 	}
-	
+
 	return spec;
 }
 
@@ -134,17 +134,19 @@ void r3_initialize(const char *path, struct r3_resource *rsrc) {
 	const int width = 0;
 	const int height = 0;
 	void *data = NULL;
-	
+
 	glGenTextures(1, &rsrc->texture_id);
 	glBindTexture(GL_TEXTURE_2D, rsrc->texture_id);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+		     GL_UNSIGNED_BYTE, data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	const unsigned int program_id = load_program("shader.vert", "shader.frag");
+	const unsigned int program_id = load_program("shader.vert",
+						     "shader.frag");
 	const struct r3_shader shader = (struct r3_shader) {
 		.program_id = program_id,
 		.position_id = glGetAttribLocation(program_id, "position"),
@@ -152,6 +154,21 @@ void r3_initialize(const char *path, struct r3_resource *rsrc) {
 		.normal_id = glGetAttribLocation(program_id, "normal"),
 		.uv_id = glGetAttribLocation(program_id, "uv"),
 		.pvm_mat_id = glGetAttribLocation(program_id, "pvmMatrix"),
+		.vm_mat_id = glGetAttribLocation(program_id, "viewModelMatrix"),
+		.normal_mat_id = glGetAttribLocation(program_id,
+						     "normalMatrix"),
+		.diffuse_color_id = glGetAttribLocation(program_id,
+							"diffuseColor"),
+		.ambient_color_id = glGetAttribLocation(program_id,
+							"ambientColor"),
+		.specular_color_id = glGetAttribLocation(program_id,
+							 "specularColor"),
+		.shininess_id = glGetAttribLocation(program_id,
+						    "shininess"),
+		.light_direction_id = glGetAttribLocation(program_id,
+							  "lightDirection"),
+		.diffuse_map_id = glGetAttribLocation(program_id,
+						      "diffuseMap"),
 	};
 	rsrc->shader = shader;
 }

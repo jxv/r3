@@ -38,7 +38,7 @@ struct r3_shader {
 	unsigned int pvm_mat_id;
 	unsigned int vm_mat_id;
 	unsigned int normal_mat_id;
-	unsigned int diffused_color_id;
+	unsigned int diffuse_color_id;
 	unsigned int ambient_color_id;
 	unsigned int specular_color_id;
 	unsigned int shininess_id;
