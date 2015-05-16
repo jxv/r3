@@ -2,16 +2,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <GLES2/gl2.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengles2.h>
 #include <assert.h>
 
-char *load_file(const char *path) {
+void r3_clear(struct r3_ren *ren) {
+	glClearColor(ren->clear_color.x, ren->clear_color.y, ren->clear_color.z, 1);
+	glClear(ren->clear_bits);
+}
+
+void r3_render(struct r3_ren *ren) {
+	ren->render(ren);
+}
+
+void r3_viewport(const struct r3_ren *ren) {
+	glViewport(0, 0, ren->window_size.x, ren->window_size.y);
+}
+
+void  r3_enable_tests(const struct r3_ren *ren) {
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void r3_quit(struct r3_ren *ren) {
+	ren->quit(ren);
+}
+
+char *r3_load_file(const char *path) {
 	FILE *file = fopen(path, "rb");
 	fseek(file, 0, SEEK_END);
-	int length = ftell(file);
+	int len = ftell(file);
 	rewind(file);
-	char *data = calloc(length + 1, sizeof(char));
-	if (fread(data, 1, length, file) == 0) {
+	char *data = calloc(len + 1, sizeof(char));
+	if (fread(data, 1, len, file) == 0) {
 		free(data);
 		return NULL;
 	}
@@ -19,32 +42,65 @@ char *load_file(const char *path) {
 	return data;
 }
 
-unsigned int make_shader(GLenum type, const char *source) {
+char* r3_load_tga(const char *fileName, int *width, int *height) {
+	char *buf = NULL;
+	FILE *f;
+	unsigned char tgaheader[12];
+	unsigned char attributes[6];
+	unsigned int imagesize;
+	f = fopen(fileName, "rb");
+	if(f == NULL) return NULL;
+
+	if (fread(&tgaheader, sizeof(tgaheader), 1, f) == 0) {
+		fclose(f);
+		return NULL;
+	}
+	if (fread(attributes, sizeof(attributes), 1, f) == 0) {
+		fclose(f);
+		return 0;
+	}
+	*width = attributes[1] * 256 + attributes[0];
+	*height = attributes[3] * 256 + attributes[2];
+	imagesize = attributes[4] / 8 * *width * *height;
+	buf = malloc(imagesize);
+	if (buf == NULL) {
+		fclose(f);
+		return 0;
+	}
+	if (fread(buf, 1, imagesize, f) != imagesize) {
+		free(buf);
+		return NULL;
+	}
+	fclose(f);
+	return buf;
+}
+
+GLuint r3_make_shader(const char *source, GLenum type) {
 	unsigned int shader = glCreateShader(type);
 	glShaderSource(shader, 1, &source, NULL);
 	glCompileShader(shader);
 	int status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE) {
-		int length;
-		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-		char *info = calloc(length, sizeof(GLchar));
-		glGetShaderInfoLog(shader, length, NULL, info);
+		int len;
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+		char *info = calloc(len, sizeof(GLchar));
+		glGetShaderInfoLog(shader, len, NULL, info);
 		fprintf(stderr, "glCompileShader failed:\n%s\n", info);
 		free(info);
 	}
 	return shader;
 }
 
-unsigned int load_shader(const char *path, GLenum type) {
-	char *data = load_file(path);
+GLuint r3_load_shader(const char *path, GLenum type) {
+	char *data = r3_load_file(path);
 	assert(data != NULL);
-	unsigned int result = make_shader(type, data);
+	unsigned int result = r3_make_shader(data, type);
 	free(data);
 	return result;
-}
+} 
 
-unsigned int make_program(unsigned int vert_shader, unsigned int frag_shader) {
+GLuint r3_make_program(unsigned int vert_shader, unsigned int frag_shader) {
 	unsigned int program_id = glCreateProgram();
 	glAttachShader(program_id, vert_shader);
 	glAttachShader(program_id, frag_shader);
@@ -52,10 +108,10 @@ unsigned int make_program(unsigned int vert_shader, unsigned int frag_shader) {
 	int status;
 	glGetProgramiv(program_id, GL_LINK_STATUS, &status);
 	if (status == false) {
-		int length;
-		glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &length);
-		char *info = calloc(length, sizeof(char));
-		glGetProgramInfoLog(program_id, length, NULL, info);
+		int len;
+		glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &len);
+		char *info = calloc(len, sizeof(char));
+		glGetProgramInfoLog(program_id, len, NULL, info);
 		fprintf(stderr, "glLinkProgram failed: %s\n", info);
 		free(info);
 	}
@@ -66,13 +122,49 @@ unsigned int make_program(unsigned int vert_shader, unsigned int frag_shader) {
 	return program_id;
 }
 
-unsigned int load_program(const char *vert_path, const char *frag_path) {
-	unsigned int vert = load_shader(vert_path, GL_VERTEX_SHADER);
-	unsigned int frag = load_shader(frag_path, GL_FRAGMENT_SHADER);
-	return make_program(vert, frag);
+GLuint r3_make_program_from_src(const char *vert_src, const char *frag_src) {
+	const unsigned int vert = r3_make_shader(vert_src, GL_VERTEX_SHADER);
+	const unsigned int frag = r3_make_shader(frag_src, GL_FRAGMENT_SHADER);
+	return r3_make_program(vert, frag);
 }
 
-static const float box_positions[4 * 6][3] = {
+GLuint r3_load_program_from_path(const char *vert_path, const char *frag_path) {
+	unsigned int vert = r3_load_shader(vert_path, GL_VERTEX_SHADER);
+	unsigned int frag = r3_load_shader(frag_path, GL_FRAGMENT_SHADER);
+	return r3_make_program(vert, frag);
+}
+
+ssize_t r3_verts_sizeof(const struct r3_verts *verts) {
+	switch (verts->tag) {
+	case R3_VERTS_PC: return verts->len * sizeof(struct r3_pc);
+	case R3_VERTS_PN: return verts->len * sizeof(struct r3_pn);
+	case R3_VERTS_PCN: return verts->len * sizeof(struct r3_pcn);
+	case R3_VERTS_PT: return verts->len * sizeof(struct r3_pt);
+	case R3_VERTS_PNT: return verts->len * sizeof(struct r3_pnt);
+	case R3_VERTS_PCNT: return verts->len * sizeof(struct r3_pcnt);
+	}
+	assert(false);
+}
+
+ssize_t r3_indices_sizeof(const struct r3_indices *indices) {
+	switch (indices->tag) {
+	case R3_INDICES_USHORT: return indices->len * sizeof(unsigned int short);
+	}
+	assert(false);
+}
+
+void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m) {
+	glGenBuffers(1, &m->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glBufferData(GL_ARRAY_BUFFER, r3_verts_sizeof(&spec->verts), spec->verts.data, GL_STATIC_DRAW);
+	glGenBuffers(1, &m->ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, r3_indices_sizeof(&spec->indices), spec->indices.data, GL_STATIC_DRAW);
+	m->num_indices = spec->indices.len;
+}
+
+/*
+static const float cuboid_positions[4 * 6][3] = {
 	{ 1, 1, 1}, { 1,-1, 1}, { 1,-1,-1}, { 1, 1,-1},
 	{ 1, 1,-1}, {-1, 1, 1}, {-1, 1, 1}, { 1, 1, 1},
 	{-1, 1, 1}, {-1,-1, 1}, { 1,-1, 1}, { 1, 1, 1},
@@ -81,7 +173,7 @@ static const float box_positions[4 * 6][3] = {
 	{ 1, 1,-1}, { 1,-1,-1}, {-1,-1,-1}, {-1, 1,-1},
 };
 
-static const float box_normals[4 * 6][3] = {
+static const float cuboid_normals[4 * 6][3] = {
 	{ 1, 0, 0}, { 1, 0, 0}, { 1, 0, 0}, { 1, 0, 0},
 	{ 0, 1, 0}, { 0, 1, 0}, { 0, 1, 0}, { 0, 1, 0},
 	{ 0, 0, 1}, { 0, 0, 1}, { 0, 0, 1}, { 0, 0, 1},
@@ -90,7 +182,7 @@ static const float box_normals[4 * 6][3] = {
 	{ 0, 0,-1}, { 0, 0,-1}, { 0, 0,-1}, { 0, 0,-1},
 };
 
-static const float box_uvs[4 * 6][2] = {
+static const float cuboid_uvs[4 * 6][2] = {
 	{0,0}, {0,1}, {1,1}, {1,0},
 	{0,0}, {0,1}, {1,1}, {1,0},
 	{0,0}, {0,1}, {1,1}, {1,0},
@@ -99,7 +191,7 @@ static const float box_uvs[4 * 6][2] = {
 	{0,0}, {0,1}, {1,1}, {1,0},
 };
 
-struct r3_mesh_spec r3_box_ctor(v3f dimen) {
+struct r3_mesh_spec r3_cuboid_ctor(v3f dimen) {
 	const v3f radii = divv3fs(dimen, 2);
 	struct r3_mesh_spec spec;
 
@@ -107,12 +199,12 @@ struct r3_mesh_spec r3_box_ctor(v3f dimen) {
 	spec.points = malloc(sizeof(struct r3_mesh_point) * spec.num_points);
 
 	for (int i = 0; i < spec.num_points; i++) {
-		const v3f position = mulv3f(*(v3f*)box_positions[i], radii);
+		const v3f position = mulv3f(*(v3f*)cuboid_positions[i], radii);
 		spec.points[i] = (struct r3_mesh_point) {
 			.position = position,
 			.color = divv3f(addv3f(position, radii), dimen),
-			.normal = *(v3f*)box_normals[i],
-			.uv = *(v2f*)box_uvs[i],
+			.normal = *(v3f*)cuboid_normals[i],
+			.uv = *(v2f*)cuboid_uvs[i],
 		};
 	}
 
@@ -153,22 +245,34 @@ void r3_initialize(const char *path, struct r3_resource *rsrc) {
 		.color_id = glGetAttribLocation(program_id, "color"),
 		.normal_id = glGetAttribLocation(program_id, "normal"),
 		.uv_id = glGetAttribLocation(program_id, "uv"),
-		.pvm_mat_id = glGetAttribLocation(program_id, "pvmMatrix"),
-		.vm_mat_id = glGetAttribLocation(program_id, "viewModelMatrix"),
-		.normal_mat_id = glGetAttribLocation(program_id,
-						     "normalMatrix"),
-		.diffuse_color_id = glGetAttribLocation(program_id,
-							"diffuseColor"),
-		.ambient_color_id = glGetAttribLocation(program_id,
-							"ambientColor"),
-		.specular_color_id = glGetAttribLocation(program_id,
-							 "specularColor"),
-		.shininess_id = glGetAttribLocation(program_id,
-						    "shininess"),
-		.light_direction_id = glGetAttribLocation(program_id,
-							  "lightDirection"),
-		.diffuse_map_id = glGetAttribLocation(program_id,
-						      "diffuseMap"),
+		.pvm_mat_id = glGetUniformLocation(program_id, "pvmMatrix"),
+		.vm_mat_id = glGetUniformLocation(program_id, "viewModelMatrix"),
+		.normal_mat_id = glGetUniformLocation(program_id,
+						      "normalMatrix"),
+		.diffuse_color_id = glGetUniformLocation(program_id,
+							 "diffuseColor"),
+		.ambient_color_id = glGetUniformLocation(program_id,
+							 "ambientColor"),
+		.specular_color_id = glGetUniformLocation(program_id,
+							  "specularColor"),
+		.shininess_id = glGetUniformLocation(program_id,
+						     "shininess"),
+		.light_direction_id = glGetUniformLocation(program_id,
+							   "lightDirection"),
+		.diffuse_map_id = glGetUniformLocation(program_id,
+						       "diffuseMap"),
 	};
 	rsrc->shader = shader;
+	
+	glGenBuffers(1, &rsrc->mesh.vbo);
+	glGenBuffers(1, &rsrc->mesh.ibo);
+
+	const struct r3_mesh_spec spec = r3_cuboid_ctor(_v3f(1,1,1));
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rsrc->mesh.vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(*spec.points) * spec.num_points, spec.points, GL_STATIC_DRAW);
+	//const int index_buf_size = sizeof(indices) * v;
+	//const int index_buf_size = sizeof(*indices) * v;
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buf_size, is_ptr, GL_STATIC_DRAW);
 }
+*/

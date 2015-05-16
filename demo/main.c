@@ -3,499 +3,319 @@
 #include <string.h>
 #include <math.h>
 #include <ml.h>
-#include <r3.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_test.h>
-#include <SDL2/SDL_opengles2.h>
-#include <SDL2/SDL_mixer.h>
+#include <r3_sdl.h>
 
 #ifdef GCW0
-const int window_w = 320;
-const int window_h = 240;
+#define WINDOW_WIDTH 320
+#define WINDOW_HEIGHT 240
 #else
-const int window_w = 320 * 2;
-const int window_h = 240 * 2;
+#define WINDOW_WIDTH (320*2)
+#define WINDOW_HEIGHT (240*2)
 #endif
 
-#define SIZE (5 * 4)
+struct r3_ren ren;
 
 struct attrib {
-	unsigned int program_id;
-	unsigned int position_id;
-	unsigned int normal_id;
-	unsigned int mvp_id;
-	unsigned int uv_id;
-	unsigned int sampler_id;
-	unsigned int camera_id;
-	unsigned int timer_id;
-	unsigned int extra1_id;
-	unsigned int extra2_id;
-	unsigned int extra3_id;
-	unsigned int extra4_id;
-	unsigned int color_id;
-	m4f mvp;
-	v3f angle;
-	v3f scale;
-	v3f translate;
+	int position_id;
+	int normal_id;
+	int texcoord_id;
+	int color_id;
 };
 
-char *load_file(const char *path) {
-    FILE *file = fopen(path, "rb");
-    fseek(file, 0, SEEK_END);
-    int length = ftell(file);
-    rewind(file);
-    char *data = calloc(length + 1, sizeof(char));
-    fread(data, 1, length, file);
-    fclose(file);
-    return data;
-}
-
-unsigned int make_shader(unsigned int type, const char *shader_src) {
-	unsigned int shader_id = glCreateShader(type);
-	glShaderSource(shader_id, 1, &shader_src, NULL);
-	glCompileShader(shader_id);
-	int status;
-	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &status);
-	if (status == false) {
-		int length;
-		glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &length);
-		char *info = calloc(length, sizeof(char));
-		glGetShaderInfoLog(shader_id, length, NULL, info);
-		fprintf(stderr, "glCompileShader failed:\n%s\n", info);
-		free(info);
-	}
-	return shader_id;
-}
-
-unsigned int load_shader(const char *path, unsigned int type) {
-	char *data = load_file(path);
-	unsigned int shader_id = make_shader(type, data);
-	free(data);
-	return shader_id;
-}
-
-unsigned int make_program(unsigned int vert_shader, unsigned int frag_shader) {
-	unsigned int program_id = glCreateProgram();
-	glAttachShader(program_id, vert_shader);
-	glAttachShader(program_id, frag_shader);
-	glLinkProgram(program_id);
-	int status;
-	glGetProgramiv(program_id, GL_LINK_STATUS, &status);
-	if (status == false) {
-		int length;
-		glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &length);
-		char *info = calloc(length, sizeof(char));
-		glGetProgramInfoLog(program_id, length, NULL, info);
-		fprintf(stderr, "glLinkProgram failed: %s\n", info);
-		free(info);
-	}
-	glDetachShader(program_id, vert_shader);
-	glDetachShader(program_id, frag_shader);
-	glDeleteShader(vert_shader);
-	glDeleteShader(frag_shader);
-	return program_id;
-}
-
-unsigned int load_program(const char *vert_path, const char *frag_path) {
-	unsigned int vert = load_shader(vert_path, GL_VERTEX_SHADER);
-	unsigned int frag = load_shader(frag_path, GL_FRAGMENT_SHADER);
-	return make_program(vert, frag);
-}
-
-void draw_cube(struct attrib *attr, unsigned int buf);
-
-static void quit(int rc, SDL_GLContext *cxt) {
-	SDL_GL_DeleteContext(*cxt);
-	exit(rc);
-}
-
-// 3D data. Vertex range -0.5..0.5 in all axes.
-// Z -0.5 is near, 0.5 is far.
-const float _vertices[] = {
-	// Front face.
-	// Bottom left
-	-0.5,  0.5, -0.5,
-	0.5, -0.5, -0.5,
-	-0.5, -0.5, -0.5,
-	// Top right
-	-0.5,  0.5, -0.5,
-	0.5,  0.5, -0.5,
-	0.5, -0.5, -0.5,
-	// Left face
-	// Bottom left
-	-0.5,  0.5,  0.5,
-	-0.5, -0.5, -0.5,
-	-0.5, -0.5,  0.5,
-	// Top right
-	-0.5,  0.5,  0.5,
-	-0.5,  0.5, -0.5,
-	-0.5, -0.5, -0.5,
-	// Top face
-	// Bottom left
-	-0.5,  0.5,  0.5,
-	0.5,  0.5, -0.5,
-	-0.5,  0.5, -0.5,
-	// Top right
-	-0.5,  0.5,  0.5,
-	0.5,  0.5,  0.5,
-	0.5,  0.5, -0.5,
-	// Right face
-	// Bottom left
-	0.5,  0.5, -0.5,
-	0.5, -0.5,  0.5,
-	0.5, -0.5, -0.5,
-	// Top right
-	0.5,  0.5, -0.5,
-	0.5,  0.5,  0.5,
-	0.5, -0.5,  0.5,
-	// Back face
-	// Bottom left
-	0.5,  0.5,  0.5,
-	-0.5, -0.5,  0.5,
-	0.5, -0.5,  0.5,
-	// Top right
-	0.5,  0.5,  0.5,
-	-0.5,  0.5,  0.5,
-	-0.5, -0.5,  0.5,
-	// Bottom face
-	// Bottom left
-	-0.5, -0.5, -0.5,
-	0.5, -0.5,  0.5,
-	-0.5, -0.5,  0.5,
-	// Top right
-	-0.5, -0.5, -0.5,
-	0.5, -0.5, -0.5,
-	0.5, -0.5,  0.5,
+struct uniform {
+	int mvp_id;
+	int normal_id;
+	int light_position_id;
+	int ambient_material_id;
+	int specular_material_id;
+	int shininess_id;
 };
 
-const float _colors[] = {
-	// Front face -- Red
-	// Bottom left
-	1.0, 0.0, 0.0, // red
-	0.6, 0.0, 0.4, // blue
-	0.6, 0.4, 0.0, // green
-	// Top right 
-	1.0, 0.0, 0.0, // red
-	0.6, 0.0, 0.0, // black
-	0.6, 0.0, 0.4, // blue
 
-	// Left face  -- Blue
-	// Bottom left
-	0.4, 0.0, 0.6, // red
-	0.0, 0.0, 1.0, // blue
-	0.0, 0.4, 0.6, // green
-	// Top right 
-	0.4, 0.0, 0.6, // red
-	0.0, 0.0, 0.6, // black
-	0.0, 0.0, 1.0, // blue
+struct attrib attrib;
+struct uniform uniform;
 
-	// Top face -- Green
-	// Bottom left
-	0.4, 0.6, 0.0, // red
-	0.0, 0.6, 0.4, // blue
-	0.0, 1.0, 0.0, // green
-	// Top right 
-	0.4, 0.6, 0.0, // red
-	0.0, 0.6, 0.0, // black
-	0.0, 0.6, 0.4, // blue
-	
-	// Right face -- Yellow
-	// Bottom left
-	1.0, 0.6, 0.0, // red
-	0.6, 0.6, 0.4, // blue
-	0.6, 1.0, 0.0, // green
-	// Top right 
-	1.0, 0.6, 0.0, // red
-	0.6, 0.6, 0.0, // black
-	0.6, 0.6, 0.4, // blue
-	
-	// Back face -- Cyan
-	// Bottom left
-	0.4, 0.6, 0.6, // red
-	0.0, 0.6, 1.0, // blue
-	0.0, 1.0, 0.6, // green
-	// Top right 
-	0.4, 0.6, 0.6, // red
-	0.0, 0.6, 0.6, // black
-	0.0, 0.6, 1.0, // blue
-	
-	// Bottom face -- Magenta
-	// Bottom left
-	1.0, 0.0, 0.6, // red
-	0.6, 0.0, 1.0, // blue
-	0.6, 0.4, 0.6, // green
-	// Top right 
-	1.0, 0.0, 0.6, // red
-	0.6, 0.0, 0.6, // black
-	0.6, 0.0, 1.0, // blue
-};
+unsigned int program_id;
+float *verts;
+unsigned int *indices;
+unsigned int num_indices;
+float angle = 0;
+m4f mvp;
+struct r3_mesh mesh;
 
-void update_mvp(const m4f persp, struct attrib *attrib) {
-	const m4f scale = scalem4f(eyem4f(), attrib->scale);
-	m4f rotate;
-	rotate = mulm4f(rotm4f(attrib->angle.x, mkv3f(1,0,0)), eyem4f());
-	rotate = mulm4f(rotm4f(attrib->angle.y, mkv3f(0,1,0)), rotate);
-	rotate = mulm4f(rotm4f(attrib->angle.z, mkv3f(0,0,1)), rotate);
-	const m4f translate = translatem4f(attrib->translate);
-	const m4f mv = addm4f(mulm4f(rotate, scale), translate);
-	attrib->mvp = mulm4f(persp, mv);
-}
+const float dt = 1 / 60.0;
+const float aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
 
-static void step(struct attrib *attribs) {
-	for (int i = 0; i < SIZE; i++) {
-		struct attrib *attrib = attribs + i;
-		attrib->scale = mkv3f(1,1,1);
-		const float t = 0.1;
-		const float s = t * (float)i + t;
-		attrib->angle = addv3f(attrib->angle, mkv3f(0.03 * s, 0.02 * s, 0.01 * s));
-		attrib->translate = mkv3f(
-			-3 + (float)(i % 5) * 1.5,
-			-2 + (float)(i / 5) * 1.5, 
-			-6  - (i % 2 ? 2 : 0)
-		);
-	}
-}
+struct r3_spec *create_cuboid_spec();
 
-static void render(unsigned int width, unsigned int height, struct attrib* attribs) {
-	const m4f persp = perspm4f(45, (float)width / (float)height, 0.01, 100);
+const char *vsh =  
+"uniform mat4 u_mvp;\n"
+"uniform mat3 u_normal;\n"
+"\n"
+"attribute vec4 a_position;\n"
+"attribute vec3 a_color;\n"
+"attribute vec3 a_normal;\n"
+"\n"
+"varying vec3 v_color;\n"
+"varying vec3 v_eyespace_normal;\n"
+"\n"
+"void main() {\n"
+"	v_color = a_color;\n"
+"	v_eyespace_normal = u_normal * a_normal;\n"
+"	gl_Position = u_mvp * a_position;\n"
+"}\n";
 
-	glClearColor(0.2, 0.2, 0.2, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	for (int i = 0; i < SIZE; i++) {
-		struct attrib *attrib = attribs + i;
-		update_mvp(persp, attrib);
-		glUseProgram(attrib->program_id);
-		glUniformMatrix4fv(attrib->mvp_id, 1, false, attrib->mvp.val);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-	}
-}
-
-SDL_Window *window;
-int done;
-
-void loop(SDL_GLContext *cxt, struct attrib *attribs) {
-	SDL_Event event;
-	int i;
-	int status;
-	// Check for events 
-	while (SDL_PollEvent(&event) && !done) {
-		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
-		    done = true;
-		}
-	}
-	if (!done) {
-		status = SDL_GL_MakeCurrent(window, *cxt);
-		if (status) {
-			SDL_Log("SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
-			// Continue for next window
-		}
-		step(attribs);
-		render(window_w, window_h, attribs);
-
-		/*
-		glUseProgram(sphere_attrib->program_id);
-		glUniformMatrix4fv(sphere_attrib->mvp_id, 1, false, sphere_attrib->mvp.val);
-		glDrawElements(GL_TRIANGLE_STRIP, sphere->size, GL_UNSIGNED_SHORT, sphere->indices);
-		*/
-
-		SDL_GL_SwapWindow(window);
-	}
-	SDL_Delay(16);
-}
-
-void init_gl_settings() {
-        SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
-        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-        SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 0);
-        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 0);
-        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-        SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
-        SDL_GL_SetAttribute(SDL_GL_ACCUM_RED_SIZE, 0);
-        SDL_GL_SetAttribute(SDL_GL_ACCUM_GREEN_SIZE, 0);
-        SDL_GL_SetAttribute(SDL_GL_ACCUM_BLUE_SIZE, 0);
-        SDL_GL_SetAttribute(SDL_GL_ACCUM_ALPHA_SIZE, 0);
-        SDL_GL_SetAttribute(SDL_GL_STEREO, 0);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-        //SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-        SDL_GL_SetAttribute(SDL_GL_RETAINED_BACKING, 1);;
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-        //SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-}
-
-void init_sdl() {
-	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-		fprintf(stderr, "Couldn't initialize audio: %s\n", SDL_GetError());
-		exit(EXIT_FAILURE);
-	}
-        if (SDL_VideoInit(NULL) < 0) {
-		fprintf(stderr, "Couldn't initialize video driver: %s\n", SDL_GetError());
-		exit(EXIT_FAILURE);
-        }
-	if (Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, 2, 4096 ) == -1) {
-		exit(EXIT_FAILURE);
-        }
-}
-
-SDL_Window* create_window() {
-	return SDL_CreateWindow(
-		"plat",
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		window_w, window_h,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS
-	);
-}
-
-void make_context(SDL_GLContext *cxt) {
-	// Create OpenGL ES contexts 
-	*cxt = SDL_GL_CreateContext(window);
-	if (!*cxt) {
-	    SDL_Log("SDL_GL_CreateContext(): %s\n", SDL_GetError());
-	    quit(2, cxt);
-	}
-	// VSYNC
-	SDL_GL_SetSwapInterval(1); // VSYNC
-	int status = SDL_GL_MakeCurrent(window, *cxt);
-	if (status) {
-		SDL_Log("SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
-		// Continue for next window
-	}
-}
-
-
-void setup_gl_viewport(SDL_Window *window) {
-	int w, h;
-	SDL_GL_GetDrawableSize(window, &w, &h);
-	glViewport(0, 0, w, h);
-}
-	
-void setup_attrib(unsigned int program_id, struct attrib *attrib) {
-	// Setup shaders and bind locations
-	attrib->angle = zerov3f();
-	attrib->program_id = program_id;
-	// Get attribute locations of non-fixed attributes like color and texture coordinates.
-	attrib->position_id = glGetAttribLocation(attrib->program_id, "av4position");
-	attrib->color_id = glGetAttribLocation(attrib->program_id, "av3color");
-	// Get uniform locations
-	attrib->mvp_id = glGetUniformLocation(attrib->program_id, "mvp");
-	glUseProgram(attrib->program_id);
-	// Enable attributes for position, color and texture coordinates etc.
-	glEnableVertexAttribArray(attrib->position_id);
-	glEnableVertexAttribArray(attrib->color_id);
-	//
-	glVertexAttribPointer(attrib->position_id, 3, GL_FLOAT, false, 0, _vertices);
-	glVertexAttribPointer(attrib->color_id, 3, GL_FLOAT, false, 0, _colors);
-}
-
-
+const char *fsh =  
+"precision mediump float;\n"
+"\n"
+"uniform vec3 u_light_position;\n"
+"uniform vec3 u_ambient_material;\n"
+"uniform vec3 u_specular_material;\n"
+"uniform float u_shininess;\n"
+"\n"
+"varying vec3 v_color;\n"
+"varying vec3 v_eyespace_normal;\n"
+"\n"
+"void main() {\n"
+"	vec3 n = normalize(v_eyespace_normal);\n"
+"	vec3 l = normalize(u_light_position);\n"
+"	vec3 e = vec3(0, 0, 1);\n"
+"	vec3 h = normalize(l + e);\n"
+"\n"
+"	float df = max(0.0, dot(n, l));\n"
+"	float sf = max(0.0, dot(n, h));\n"
+"	sf = pow(sf, u_shininess);\n"
+"\n"
+"	if (df < 0.1) df = 0.1;\n"
+"	else if (df < 0.3) df = 0.3;\n"
+"	else if (df < 0.6) df = 0.6;\n"
+"	else df = 1.0;\n"
+"\n"
+"	sf = step(0.5, sf);\n"
+"\n"
+"	vec3 color = u_ambient_material + df * v_color + sf * u_specular_material;\n"
+"	gl_FragColor = vec4(color, 1.0);\n"
+"}\n";
 
 int main(int argc, char *argv[]) {
-	SDL_GLContext context;
-	struct attrib attribs[SIZE];
-	//struct attrib sphere_attrib;
-	struct sphere sphere;
+	// Init
+	r3_sdl_init("", _v2i(WINDOW_WIDTH, WINDOW_HEIGHT), &ren);
+	r3_viewport(&ren);
+	r3_enable_tests(&ren);
+	// Setup cube
+	program_id = r3_make_program_from_src(vsh, fsh);
+	glUseProgram(program_id);
+	attrib.position_id = glGetAttribLocation(program_id, "a_position");
+	attrib.color_id = glGetAttribLocation(program_id, "a_color");
+	attrib.normal_id = glGetAttribLocation(program_id, "a_normal");
+	uniform.mvp_id = glGetUniformLocation(program_id, "u_mvp");
+	uniform.normal_id = glGetUniformLocation(program_id, "u_normal");
+	uniform.light_position_id = glGetUniformLocation(program_id, "u_light_position");
+	uniform.ambient_material_id = glGetUniformLocation(program_id, "u_ambient_material");
+	uniform.specular_material_id = glGetUniformLocation(program_id, "u_specular_material");
+	uniform.shininess_id = glGetUniformLocation(program_id, "u_shininess");
+	struct r3_spec *cuboid_spec = create_cuboid_spec();
+	r3_make_mesh_from_spec(cuboid_spec, &mesh);
+	free(cuboid_spec);
+	for (int i = 0; i < 1200; i++) {
+		// Update
+		angle = fmodf(angle + dt * 2, M_PI * 2);
+		const m4f persp = perspm4f(45, aspect, 1, 20);
+		const m4f translate = translatem4f(_v3f(0,0,-7));
+		const m4f rot = rotm4f(angle, _v3f(0.9,0.5,0.2));
+		const m4f mv = addm4f(mulm4f(rot, scalem4f(eyem4f(), _v3f(3,3,3))), translate);
+		mvp = mulm4f(persp, mv);
+		// Render
+		r3_viewport(&ren);
+		r3_clear(&ren);
+		{
+			glUseProgram(program_id);
+			// Set uniforms
+			glUniformMatrix4fv(uniform.mvp_id, 1, GL_FALSE, mvp.val);
+        		glUniformMatrix3fv(uniform.normal_id, 1, 0, m3fm4f(mv).val);
+        		glUniform3fv(uniform.light_position_id, 1, _v3f(0.25, 0.25, 1).val);
+			glUniform3f(uniform.ambient_material_id, 0.05, 0.05, 0.05);
+			glUniform3f(uniform.specular_material_id, 0.5, 0.5, 0.5);
+			glUniform1f(uniform.shininess_id, 100);
+			// VBO & IBO 
+			glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+			glEnableVertexAttribArray(attrib.position_id);
+			glEnableVertexAttribArray(attrib.color_id);
+			glEnableVertexAttribArray(attrib.normal_id);
+			glVertexAttribPointer(attrib.position_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), NULL);
+			glVertexAttribPointer(attrib.color_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)sizeof(v3f));
+			glVertexAttribPointer(attrib.normal_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)(sizeof(v3f) * 2));
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
+			glDrawElements(GL_TRIANGLES, mesh.num_indices, GL_UNSIGNED_SHORT, NULL);
+			glDisableVertexAttribArray(attrib.position_id);
+			glDisableVertexAttribArray(attrib.color_id);
+			glDisableVertexAttribArray(attrib.normal_id);
+			//		
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	//make_solid_sphere(0.5, 10, 10, &sphere);
-	//printf("size: %d\n", sphere.size);
-
-	// Initialize
-	init_sdl();
-	init_gl_settings();
-	window = create_window();
-
-	// Create GL context
-	make_context(&context);
-	setup_gl_viewport(window);
-
-	// Load resources	
-	Mix_Music *music = Mix_LoadMUS("res/di2.xm");
-	if (!music) return EXIT_FAILURE;
-	// Mix_PlayMusic(music, -1); Mix_PauseMusic();
-	unsigned int program = load_program("res/shader/cube.vert", "res/shader/cube.frag");
-
-	// Setup render data
-	for (int i = 0; i < SIZE; i++) {
-		setup_attrib(program, &attribs[i]);
+		}
+		r3_render(&ren);
+		SDL_Delay(16);
 	}
-
-	// Enable GL filters
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
-	
-	// Main loop
-	done = 0;	
-	while(!done) {
-		loop(&context, attribs);
-	}
-
-	// Cleanup
-	Mix_FreeMusic(music);
-	Mix_CloseAudio();
-	quit(EXIT_SUCCESS, &context);
+	// Clean up
+	glDeleteBuffers(1, &mesh.vbo);
+	glDeleteBuffers(1, &mesh.ibo);
+	glDeleteProgram(program_id);
+	r3_quit(&ren);
 	return EXIT_SUCCESS;
 }
 
-void draw_triangles_3d_ao(const struct attrib *attr, unsigned int buf, int count) {
-	glBindBuffer(GL_ARRAY_BUFFER, buf);
-	glEnableVertexAttribArray(attr->position_id);
-	glEnableVertexAttribArray(attr->normal_id);
-	glEnableVertexAttribArray(attr->uv_id);
-	glVertexAttribPointer(attr->position_id, 3, GL_FLOAT, false, sizeof(float) * 10, 0);
-	glVertexAttribPointer(attr->normal_id, 3, GL_FLOAT, false, sizeof(float) * 10, (void*)(sizeof(float) * 3));
-	glVertexAttribPointer(attr->uv_id, 4, GL_FLOAT, false, sizeof(float) * 10, (void*)(sizeof(float) * 6));
-	glDrawArrays(GL_TRIANGLES, 0, count);
-	glDisableVertexAttribArray(attr->position_id);
-	glDisableVertexAttribArray(attr->normal_id);
-	glDisableVertexAttribArray(attr->uv_id);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
+struct r3_spec *create_cuboid_spec() {
+	const float colors[3*36] = {
+		1.0, 0.0, 0.0,
+		0.6, 0.0, 0.4,
+		0.6, 0.4, 0.0,
+		1.0, 0.0, 0.0,
+		0.6, 0.0, 0.0,
+		0.6, 0.0, 0.4,
+		0.4, 0.0, 0.6,
+		0.0, 0.0, 1.0,
+		0.0, 0.4, 0.6,
+		0.4, 0.0, 0.6,
+		0.0, 0.0, 0.6,
+		0.0, 0.0, 1.0,
+		0.4, 0.6, 0.0,
+		0.0, 0.6, 0.4,
+		0.0, 1.0, 0.0,
+		0.4, 0.6, 0.0,
+		0.0, 0.6, 0.0,
+		0.0, 0.6, 0.4,
+		1.0, 0.6, 0.0,
+		0.6, 0.6, 0.4,
+		0.6, 1.0, 0.0,
+		1.0, 0.6, 0.0,
+		0.6, 0.6, 0.0,
+		0.6, 0.6, 0.4,
+		0.4, 0.6, 0.6,
+		0.0, 0.6, 1.0,
+		0.0, 1.0, 0.6,
+		0.4, 0.6, 0.6,
+		0.0, 0.6, 0.6,
+		0.0, 0.6, 1.0,
+		1.0, 0.0, 0.6,
+		0.6, 0.0, 1.0,
+		0.6, 0.4, 0.6,
+		1.0, 0.0, 0.6,
+		0.6, 0.0, 0.6,
+		0.6, 0.0, 1.0,
+	};
+	const float positions[3*24] = {
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		0.5f, -0.5f,  0.5f,
+		0.5f, -0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f,  0.5f,  0.5f,
+		0.5f,  0.5f,  0.5f,
+		0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		0.5f,  0.5f, -0.5f,
+		0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f, 0.5f,
+		-0.5f,  0.5f, 0.5f,
+		0.5f,  0.5f, 0.5f, 
+		0.5f, -0.5f, 0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f,
+		0.5f, -0.5f, -0.5f,
+		0.5f, -0.5f,  0.5f,
+		0.5f,  0.5f,  0.5f,
+		0.5f,  0.5f, -0.5f,
+	};
+	const float normals[3*24] = {
+		0.0f, -1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		-1.0f, 0.0f, 0.0f,
+		-1.0f, 0.0f, 0.0f,
+		-1.0f, 0.0f, 0.0f,
+		-1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+	};
+	const float texcoords[2*24] = {
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+	};
+	const unsigned short int indices[36] = {
+		0, 2, 1,
+		0, 3, 2, 
+		4, 5, 6,
+		4, 6, 7,
+		8, 9, 10,
+		8, 10, 11, 
+		12, 15, 14,
+		12, 14, 13, 
+		16, 17, 18,
+		16, 18, 19, 
+		20, 23, 22,
+		20, 22, 21
+	};
 
-void draw_cube(struct attrib *attr, unsigned int buf) {
-	draw_triangles_3d_ao(attr, buf, 36);
-}
+	void *buf = malloc(sizeof(struct r3_spec) + 24 * sizeof(struct r3_pcnt) + 36 * sizeof(unsigned short int));
+	struct r3_spec *spec = buf;
+	spec->verts.tag = R3_VERTS_PCNT;
+	spec->verts.len = 24;
+	spec->verts.data = sizeof(struct r3_spec) + buf;
+	spec->indices.tag = R3_INDICES_USHORT;
+	spec->indices.len = 36;
+	spec->indices.data = 24 * sizeof(struct r3_pcnt) + sizeof(struct r3_spec) + buf;
 
-/*
-void render_item(struct attrib *attrib) {
-    float mvp[16];
-    //set_matrix_item(matrix, g->width, g->height, g->scale);
-    glUseProgram(attrib->program);
-    glUniformMatrix4fv(attrib->matrix, 1, false, mvp);
-    glUniform3f(attrib->camera, 0, 0, 5);
-    glUniform1i(attrib->sampler, 0);
-    //glUniform1f(attrib->timer, time_of_day());
-    int w = items[g->item_index];
-    if (is_plant(w)) {
-        unsigned int buffer = gen_plant_buffer(0, 0, 0, 0.5, w);
-        draw_plant(attrib, buffer);
-        del_buffer(buffer);
-    }
-    else {
-        unsigned int buffer = gen_cube_buffer(0, 0, 0, 0.5, w);
-        draw_cube(attrib, buffer);
-        del_buffer(buffer);
-    }
-}
-*/
+	for (int i = 0; i < 24; i++) {
+		spec->verts.pcnt[i] = (struct r3_pcnt) {
+			.position = _v3f(positions[i*3+0], positions[i*3+1], positions[i*3+2]),
+			.color = _v3f(colors[i*3+0], colors[i*3+1], colors[i*3+2]),
+			.normal = _v3f(normals[i*3+0], normals[i*3+1], normals[i*3+2]),
+			.uv = _v2f(texcoords[i*2+0], texcoords[i*2+1]),
+		};
+	}
 
-m4f set_matrix_item(int width, int height, int scale) {
-	const float aspect = (float)width / height;
-	const float size = 64 * scale;
-	const float box = height / size / 2;
-	const float xoffset = 1 - size / width * 2;
-	const float yoffset = 1 - size / height * 2;
-	m4f a = eyem4f();
-	m4f b = rotm4f(0, mkv3f(1, 0, -M_PI / 4));
-	a = mulm4f(a, b);
-	b = rotm4f(1, mkv3f(0, 0, -M_PI / 9));
-	a = mulm4f(a, b);
-	b = orthom4f(-box * aspect, box * aspect, -box, box, -1, 1);
-	// b = perspm4f(45, (float)width / (float)height, 0.01, 100);
-	a = mulm4f(b, a);
-	b = translatem4f(mkv3f(-xoffset, -yoffset, 0));
-	a = mulm4f(b, a);
-	return mulm4f(eyem4f(), a);
+	memcpy(spec->indices.data, indices, sizeof(unsigned int short) * 36);
+
+	return spec;
 }

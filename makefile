@@ -8,7 +8,7 @@ install:
 	cp libr3.a /usr/lib/
 
 gcw0:
-	mipsel-gcw0-linux-uclibc-cc src/r3.c -c -o src/re.o -I./include -Wall -Werror -pedantic -std=c11 -ffast-math -g -O2 -lc -lm -D_GNU_SOURCE -I./include
+	mipsel-gcw0-linux-uclibc-cc src/r3.c -c -o src/r3.o -I./include -Wall -Werror -pedantic -std=c11 -ffast-math -g -O2 -lc -lm -D_GNU_SOURCE -I./include
 	mipsel-gcw0-linux-uclibc-ar rvs libr3.a src/*.o
 install_gcw0:
 	mkdir -p /opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
