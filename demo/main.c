@@ -44,6 +44,7 @@ unsigned int num_indices;
 float angle = 0;
 char *img_data = NULL;
 int img_width, img_height;
+m4f mv;
 m4f mvp;
 struct r3_mesh mesh;
 
@@ -149,24 +150,39 @@ int main(int argc, char *argv[]) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	free(img_data);
 
+/*
 	printf("texid:%d, mvp:%d, normal:%d, lightpos:%d, ambient:%d, specular:%d, shininess:%d, sample:%d\n",
 		tex_id,
 		uniform.mvp_id, uniform.normal_id, uniform.light_position_id, uniform.ambient_material_id,
 		uniform.specular_material_id, uniform.shininess_id, uniform.sample_id
 	);
+*/
 
-	for (int i = 0; i < 120; i++) {
-		// Update
-		angle = fmodf(angle + dt * 2, M_PI * 2);
-		const m4f persp = perspm4f(45, aspect, 1, 20);
-		const m4f translate = translatem4f(_v3f(0,0,-7));
-		const m4f rot = rotm4f(angle, _v3f(0.9,0.5,0.2));
-		const m4f mv = addm4f(mulm4f(rot, scalem4f(eyem4f(), _v3f(3,3,3))), translate);
-		mvp = mulm4f(persp, mv);
-		// Render
-		r3_viewport(&ren);
-		r3_clear(&ren);
+	bool done = false;
+	while (!done) {
+		// Input
 		{
+			SDL_Event event;
+			while (SDL_PollEvent(&event) && !done) {
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
+					done = true;
+				}
+			}
+		}
+		// Update
+		{
+			angle = fmodf(angle + dt * 2, M_PI * 2);
+			const m4f persp = perspm4f(45, aspect, 1, 20);
+			const m4f translate = translatem4f(_v3f(0,0,-7));
+			const m4f rot = rotm4f(angle, _v3f(0.9,0.5,0.2));
+			mv = addm4f(mulm4f(rot, scalem4f(eyem4f(), _v3f(3,3,3))), translate);
+			mvp = mulm4f(persp, mv);
+		}
+		// Render
+		{
+			r3_viewport(&ren);
+			r3_clear(&ren);
+			// 
 			glUseProgram(program_id);
 			// Set uniforms
 			glUniformMatrix4fv(uniform.mvp_id, 1, GL_FALSE, mvp.val);
@@ -198,9 +214,10 @@ int main(int argc, char *argv[]) {
 			glDisableVertexAttribArray(attrib.texcoord_id);
 			//		
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+			//
+			r3_render(&ren);
 		}
-		r3_render(&ren);
+
 		SDL_Delay(16);
 	}
 	// Clean up
