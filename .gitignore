@@ -1,3 +1,4 @@
 *.o
 .*
 *.a
+demo/r3_demo

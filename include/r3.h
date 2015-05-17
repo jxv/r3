@@ -153,6 +153,7 @@ void r3_render(struct r3_ren *ren);
 void r3_quit(struct r3_ren *ren);
 
 char *r3_load_file(const char *path);
+char* r3_load_tga(const char *fileName, int *width, int *height);
 unsigned int r3_make_shader(const char *src, GLenum type);
 unsigned int r3_load_shader(const char *path, GLenum type);
 unsigned int r3_make_program(unsigned int vert_shader, unsigned int frag_shader);
