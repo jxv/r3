@@ -15,21 +15,40 @@
 
 struct r3_ren ren;
 
+#define	R3_ATTRIB_NORMAL 0x01
+#define R3_ATTRIB_TEXCOORD 0x02
+#define R3_ATTRIB_COLOR 0x04
+
 struct attrib {
-	int position_id;
+	unsigned char bits;
+	int position_id; // always
 	int normal_id;
 	int texcoord_id;
 	int color_id;
 };
 
+#define R3_UNIFORM_NORMAL 0x01
+#define R3_UNIFORM_LIGHT_POSITION 0x02
+#define R3_UNIFORM_AMBIENT_MATERIAL 0x04
+#define R3_UNIFORM_SPECULAR_MATERIAL 0x04
+#define R3_UNIFORM_SHININESS 0x08
+#define R3_UNIFORM_SAMPLE 0x10
+
 struct uniform {
-	int mvp_id;
+	unsigned char bits;
+	int mvp_id;	// always
 	int normal_id;
 	int light_position_id;
 	int ambient_material_id;
 	int specular_material_id;
 	int shininess_id;
 	int sample_id;
+};
+
+struct shader {
+	struct attrib attrib;
+	struct uniform uniform;
+	int texcoord_id;
 };
 
 
@@ -96,6 +115,7 @@ const char *fsh =
 "	float sf = max(0.0, dot(n, h));\n"
 "	sf = pow(sf, u_shininess);\n"
 "\n"
+
 // No cell shading
 /*
 "	if (df < 0.1) df = 0.1;\n"
@@ -106,6 +126,7 @@ const char *fsh =
 
 // Minimum value
 "	if (df < 0.3) df = 0.3;\n"
+
 "\n"
 "	sf = step(0.5, sf);\n"
 "\n"
@@ -119,6 +140,7 @@ int main(int argc, char *argv[]) {
 	r3_viewport(&ren);
 	r3_enable_tests(&ren);
 	ren.clear_color = _v3f(0.2, 0.2, 0.2);
+
 	// Setup cube
 	program_id = r3_make_program_from_src(vsh, fsh);
 	glUseProgram(program_id);
@@ -182,8 +204,10 @@ int main(int argc, char *argv[]) {
 		{
 			r3_viewport(&ren);
 			r3_clear(&ren);
+
 			// 
 			glUseProgram(program_id);
+
 			// Set uniforms
 			glUniformMatrix4fv(uniform.mvp_id, 1, GL_FALSE, mvp.val);
         		glUniformMatrix3fv(uniform.normal_id, 1, 0, m3fm4f(mv).val);
@@ -192,6 +216,7 @@ int main(int argc, char *argv[]) {
 			glUniform3f(uniform.specular_material_id, 0.5, 0.5, 0.5);
 			glUniform1f(uniform.shininess_id, 100);
 
+			// 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, tex_id);
 			glUniform1i(uniform.sample_id, 0);
@@ -208,12 +233,14 @@ int main(int argc, char *argv[]) {
 			glVertexAttribPointer(attrib.texcoord_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)(sizeof(v3f) * 3));
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
 			glDrawElements(GL_TRIANGLES, mesh.num_indices, GL_UNSIGNED_SHORT, NULL);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			glDisableVertexAttribArray(attrib.position_id);
 			glDisableVertexAttribArray(attrib.color_id);
 			glDisableVertexAttribArray(attrib.normal_id);
 			glDisableVertexAttribArray(attrib.texcoord_id);
-			//		
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			//
+
 			//
 			r3_render(&ren);
 		}
@@ -229,43 +256,37 @@ int main(int argc, char *argv[]) {
 }
 
 struct r3_spec *create_cuboid_spec() {
-	const float colors[3*36] = {
+	const float colors[3*24] = {
+		// Red
 		1.0, 0.0, 0.0,
-		0.6, 0.0, 0.4,
-		0.6, 0.4, 0.0,
 		1.0, 0.0, 0.0,
-		0.6, 0.0, 0.0,
-		0.6, 0.0, 0.4,
-		0.4, 0.0, 0.6,
-		0.0, 0.0, 1.0,
-		0.0, 0.4, 0.6,
-		0.4, 0.0, 0.6,
-		0.0, 0.0, 0.6,
-		0.0, 0.0, 1.0,
-		0.4, 0.6, 0.0,
-		0.0, 0.6, 0.4,
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 0.0,
+		// Cyan
+		0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0,
+		// Green
 		0.0, 1.0, 0.0,
-		0.4, 0.6, 0.0,
-		0.0, 0.6, 0.0,
-		0.0, 0.6, 0.4,
-		1.0, 0.6, 0.0,
-		0.6, 0.6, 0.4,
-		0.6, 1.0, 0.0,
-		1.0, 0.6, 0.0,
-		0.6, 0.6, 0.0,
-		0.6, 0.6, 0.4,
-		0.4, 0.6, 0.6,
-		0.0, 0.6, 1.0,
-		0.0, 1.0, 0.6,
-		0.4, 0.6, 0.6,
-		0.0, 0.6, 0.6,
-		0.0, 0.6, 1.0,
-		1.0, 0.0, 0.6,
-		0.6, 0.0, 1.0,
-		0.6, 0.4, 0.6,
-		1.0, 0.0, 0.6,
-		0.6, 0.0, 0.6,
-		0.6, 0.0, 1.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0,
+		// Magenta
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+		// Blue
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		// Yellow
+		1.0, 1.0, 0.0,
+		1.0, 1.0, 0.0,
+		1.0, 1.0, 0.0,
+		1.0, 1.0, 0.0,
 	};
 	const float positions[3*24] = {
 		-0.5f, -0.5f, -0.5f,

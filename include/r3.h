@@ -129,9 +129,10 @@ struct r3_shader {
 	int position_id;
 	int color_id;
 	int normal_id;
-	int tex_coord_id;
+	int texcoord_id;
 	int proj_id;
 	int mv_id;
+	int mvp_id;
 
 	int normal_mat_id;
 	int diffuse_color_id;
