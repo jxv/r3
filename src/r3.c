@@ -163,116 +163,151 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m) {
 	m->num_indices = spec->indices.len;
 }
 
-/*
-static const float cuboid_positions[4 * 6][3] = {
-	{ 1, 1, 1}, { 1,-1, 1}, { 1,-1,-1}, { 1, 1,-1},
-	{ 1, 1,-1}, {-1, 1, 1}, {-1, 1, 1}, { 1, 1, 1},
-	{-1, 1, 1}, {-1,-1, 1}, { 1,-1, 1}, { 1, 1, 1},
-	{-1, 1,-1}, {-1,-1,-1}, {-1,-1, 1}, {-1, 1, 1},
-	{ 1,-1,-1}, { 1,-1, 1}, {-1,-1, 1}, {-1,-1,-1},
-	{ 1, 1,-1}, { 1,-1,-1}, {-1,-1,-1}, {-1, 1,-1},
-};
+struct r3_spec *r3_create_cuboid_spec() {
+	const float colors[3*24] = {
+		// Red
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 0.0,
+		// Cyan
+		0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0,
+		0.0, 1.0, 1.0,
+		// Green
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 0.0,
+		// Magenta
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+		1.0, 0.0, 1.0,
+		// Blue
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		0.0, 0.0, 1.0,
+		// Yellow
+		1.0, 1.0, 0.0,
+		1.0, 1.0, 0.0,
+		1.0, 1.0, 0.0,
+		1.0, 1.0, 0.0,
+	};
+	const float positions[3*24] = {
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		0.5f, -0.5f,  0.5f,
+		0.5f, -0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f,  0.5f,  0.5f,
+		0.5f,  0.5f,  0.5f,
+		0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		0.5f,  0.5f, -0.5f,
+		0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f, 0.5f,
+		-0.5f,  0.5f, 0.5f,
+		0.5f,  0.5f, 0.5f, 
+		0.5f, -0.5f, 0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f,
+		0.5f, -0.5f, -0.5f,
+		0.5f, -0.5f,  0.5f,
+		0.5f,  0.5f,  0.5f,
+		0.5f,  0.5f, -0.5f,
+	};
+	const float normals[3*24] = {
+		0.0f, -1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+		-1.0f, 0.0f, 0.0f,
+		-1.0f, 0.0f, 0.0f,
+		-1.0f, 0.0f, 0.0f,
+		-1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+	};
+	const float texcoords[2*24] = {
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+	};
+	const unsigned short int indices[36] = {
+		0, 2, 1,
+		0, 3, 2, 
+		4, 5, 6,
+		4, 6, 7,
+		8, 9, 10,
+		8, 10, 11, 
+		12, 15, 14,
+		12, 14, 13, 
+		16, 17, 18,
+		16, 18, 19, 
+		20, 23, 22,
+		20, 22, 21
+	};
 
-static const float cuboid_normals[4 * 6][3] = {
-	{ 1, 0, 0}, { 1, 0, 0}, { 1, 0, 0}, { 1, 0, 0},
-	{ 0, 1, 0}, { 0, 1, 0}, { 0, 1, 0}, { 0, 1, 0},
-	{ 0, 0, 1}, { 0, 0, 1}, { 0, 0, 1}, { 0, 0, 1},
-	{-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0},
-	{ 0,-1, 0}, { 0,-1, 0}, { 0,-1, 0}, { 0,-1, 0},
-	{ 0, 0,-1}, { 0, 0,-1}, { 0, 0,-1}, { 0, 0,-1},
-};
+	char *buf = malloc(sizeof(struct r3_spec) + 24 * sizeof(struct r3_pcnt) + 36 * sizeof(unsigned short int));
+	struct r3_spec *spec = (void*)buf;
+	spec->verts.tag = R3_VERTS_PCNT;
+	spec->verts.len = 24;
+	spec->verts.data = (void*) (sizeof(struct r3_spec) + buf);
+	spec->indices.tag = R3_INDICES_USHORT;
+	spec->indices.len = 36;
+	spec->indices.data = (void*)(24 * sizeof(struct r3_pcnt) + sizeof(struct r3_spec) + buf);
 
-static const float cuboid_uvs[4 * 6][2] = {
-	{0,0}, {0,1}, {1,1}, {1,0},
-	{0,0}, {0,1}, {1,1}, {1,0},
-	{0,0}, {0,1}, {1,1}, {1,0},
-	{0,0}, {0,1}, {1,1}, {1,0},
-	{0,0}, {0,1}, {1,1}, {1,0},
-	{0,0}, {0,1}, {1,1}, {1,0},
-};
-
-struct r3_mesh_spec r3_cuboid_ctor(v3f dimen) {
-	const v3f radii = divv3fs(dimen, 2);
-	struct r3_mesh_spec spec;
-
-	spec.num_points = 4 * 6;
-	spec.points = malloc(sizeof(struct r3_mesh_point) * spec.num_points);
-
-	for (int i = 0; i < spec.num_points; i++) {
-		const v3f position = mulv3f(*(v3f*)cuboid_positions[i], radii);
-		spec.points[i] = (struct r3_mesh_point) {
-			.position = position,
-			.color = divv3f(addv3f(position, radii), dimen),
-			.normal = *(v3f*)cuboid_normals[i],
-			.uv = *(v2f*)cuboid_uvs[i],
+	for (int i = 0; i < 24; i++) {
+		spec->verts.pcnt[i] = (struct r3_pcnt) {
+			.position = _v3f(positions[i*3+0], positions[i*3+1], positions[i*3+2]),
+			.color = _v3f(colors[i*3+0], colors[i*3+1], colors[i*3+2]),
+			.normal = _v3f(normals[i*3+0], normals[i*3+1], normals[i*3+2]),
+			.uv = _v2f(texcoords[i*2+0], texcoords[i*2+1]),
 		};
 	}
 
-	spec.num_indices = 12;
-	spec.indices = malloc(sizeof(v3ui) * spec.num_indices);
-	for (int i = 0, j = 0; i < 6; i++, j += 2) {
-		const int a = 0 + i * 4;
-		const int b = 1 + i * 4;
-		const int c = 2 + i * 4;
-		const int d = 3 + i * 4;
-		spec.indices[j + 0] = _v3ui(a, b, c);
-		spec.indices[j + 1] = _v3ui(c, d, a);
-	}
+	memcpy(spec->indices.data, indices, sizeof(unsigned int short) * 36);
 
 	return spec;
 }
-
-void r3_initialize(const char *path, struct r3_resource *rsrc) {
-	const int width = 0;
-	const int height = 0;
-	void *data = NULL;
-
-	glGenTextures(1, &rsrc->texture_id);
-	glBindTexture(GL_TEXTURE_2D, rsrc->texture_id);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-		     GL_UNSIGNED_BYTE, data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	const unsigned int program_id = load_program("shader.vert",
-						     "shader.frag");
-	const struct r3_shader shader = (struct r3_shader) {
-		.program_id = program_id,
-		.position_id = glGetAttribLocation(program_id, "position"),
-		.color_id = glGetAttribLocation(program_id, "color"),
-		.normal_id = glGetAttribLocation(program_id, "normal"),
-		.uv_id = glGetAttribLocation(program_id, "uv"),
-		.pvm_mat_id = glGetUniformLocation(program_id, "pvmMatrix"),
-		.vm_mat_id = glGetUniformLocation(program_id, "viewModelMatrix"),
-		.normal_mat_id = glGetUniformLocation(program_id,
-						      "normalMatrix"),
-		.diffuse_color_id = glGetUniformLocation(program_id,
-							 "diffuseColor"),
-		.ambient_color_id = glGetUniformLocation(program_id,
-							 "ambientColor"),
-		.specular_color_id = glGetUniformLocation(program_id,
-							  "specularColor"),
-		.shininess_id = glGetUniformLocation(program_id,
-						     "shininess"),
-		.light_direction_id = glGetUniformLocation(program_id,
-							   "lightDirection"),
-		.diffuse_map_id = glGetUniformLocation(program_id,
-						       "diffuseMap"),
-	};
-	rsrc->shader = shader;
-	
-	glGenBuffers(1, &rsrc->mesh.vbo);
-	glGenBuffers(1, &rsrc->mesh.ibo);
-
-	const struct r3_mesh_spec spec = r3_cuboid_ctor(_v3f(1,1,1));
-	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rsrc->mesh.vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(*spec.points) * spec.num_points, spec.points, GL_STATIC_DRAW);
-	//const int index_buf_size = sizeof(indices) * v;
-	//const int index_buf_size = sizeof(*indices) * v;
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buf_size, is_ptr, GL_STATIC_DRAW);
-}
-*/

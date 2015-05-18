@@ -169,5 +169,6 @@ static const v3f R3_DEFAULT_CLEAR_COLOR = {.x = 0, .y = 0, .z = 0};
 void r3_viewport(const struct r3_ren *ren);
 void r3_enable_tests(const struct r3_ren *ren);
 void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m);
+struct r3_spec *r3_create_cuboid_spec();
 
 #endif

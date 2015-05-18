@@ -15,28 +15,30 @@
 
 struct r3_ren ren;
 
-#define	R3_ATTRIB_NORMAL 0x01
-#define R3_ATTRIB_TEXCOORD 0x02
-#define R3_ATTRIB_COLOR 0x04
+#define	R3_ATTRIB_POSITION 0x01
+#define	R3_ATTRIB_NORMAL 0x02
+#define R3_ATTRIB_TEXCOORD 0x04
+#define R3_ATTRIB_COLOR 0x08
 
 struct attrib {
-	unsigned char bits;
+	unsigned char mask;
 	int position_id; // always
 	int normal_id;
 	int texcoord_id;
 	int color_id;
 };
 
-#define R3_UNIFORM_NORMAL 0x01
-#define R3_UNIFORM_LIGHT_POSITION 0x02
-#define R3_UNIFORM_AMBIENT_MATERIAL 0x04
-#define R3_UNIFORM_SPECULAR_MATERIAL 0x04
-#define R3_UNIFORM_SHININESS 0x08
-#define R3_UNIFORM_SAMPLE 0x10
+#define R3_UNIFORM_MVP 0x01
+#define R3_UNIFORM_NORMAL 0x02
+#define R3_UNIFORM_LIGHT_POSITION 0x04
+#define R3_UNIFORM_AMBIENT_MATERIAL 0x08
+#define R3_UNIFORM_SPECULAR_MATERIAL 0x10
+#define R3_UNIFORM_SHININESS 0x20
+#define R3_UNIFORM_SAMPLE 0x40
 
 struct uniform {
-	unsigned char bits;
-	int mvp_id;	// always
+	unsigned char mask;
+	int mvp_id;
 	int normal_id;
 	int light_position_id;
 	int ambient_material_id;
@@ -69,8 +71,6 @@ struct r3_mesh mesh;
 
 const float dt = 1 / 60.0;
 const float aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
-
-struct r3_spec *create_cuboid_spec();
 
 const char *vsh =  
 "uniform mat4 u_mvp;\n"
@@ -134,30 +134,53 @@ const char *fsh =
 "	gl_FragColor = vec4(color, 1.0) * 0.8 + texture2D(u_sample, v_texcoord) * 0.2;\n"
 "}\n";
 
+
+void setup_attrib() {
+	struct attrib *a = &attrib;
+	a->position_id = a->mask | R3_ATTRIB_POSITION ? glGetAttribLocation(program_id, "a_position") : -1;
+	a->normal_id = a->mask | R3_ATTRIB_NORMAL ? glGetAttribLocation(program_id, "a_normal") : -1;
+	a->color_id = a->mask | R3_ATTRIB_COLOR ? glGetAttribLocation(program_id, "a_color") : -1;
+	a->texcoord_id = a->mask | R3_ATTRIB_TEXCOORD ? glGetAttribLocation(program_id, "a_texcoord") : -1;
+}
+
+void setup_uniform() {	
+	struct uniform *u = &uniform;
+	u->mvp_id = u->mask | R3_UNIFORM_MVP ? glGetUniformLocation(program_id, "u_mvp") : -1;
+	u->normal_id = u->mask | R3_UNIFORM_NORMAL ? glGetUniformLocation(program_id, "u_normal") : -1;
+	u->light_position_id = u->mask | R3_UNIFORM_LIGHT_POSITION ? glGetUniformLocation(program_id, "u_light_position") : -1;
+	u->ambient_material_id = u->mask | R3_UNIFORM_AMBIENT_MATERIAL ? glGetUniformLocation(program_id, "u_ambient_material") : -1;
+	u->specular_material_id = u->mask | R3_UNIFORM_SPECULAR_MATERIAL ? glGetUniformLocation(program_id, "u_specular_material") : -1;
+	u->shininess_id = u->mask | R3_UNIFORM_SHININESS ? glGetUniformLocation(program_id, "u_shininess") : -1;
+	u->sample_id = u->mask | R3_UNIFORM_SAMPLE ? glGetUniformLocation(program_id, "u_sample") : -1;
+}
+
+void setup_shader() {
+	glUseProgram(program_id);
+	setup_attrib();
+	setup_uniform();
+}
+
+
 int main(int argc, char *argv[]) {
 	// Init
 	r3_sdl_init("", _v2i(WINDOW_WIDTH, WINDOW_HEIGHT), &ren);
 	r3_viewport(&ren);
 	r3_enable_tests(&ren);
 	ren.clear_color = _v3f(0.2, 0.2, 0.2);
+	
+
 
 	// Setup cube
 	program_id = r3_make_program_from_src(vsh, fsh);
-	glUseProgram(program_id);
-	attrib.position_id = glGetAttribLocation(program_id, "a_position");
-	attrib.color_id = glGetAttribLocation(program_id, "a_color");
-	attrib.normal_id = glGetAttribLocation(program_id, "a_normal");
-	attrib.texcoord_id = glGetAttribLocation(program_id, "a_texcoord");
-	uniform.mvp_id = glGetUniformLocation(program_id, "u_mvp");
-	uniform.normal_id = glGetUniformLocation(program_id, "u_normal");
-	uniform.light_position_id = glGetUniformLocation(program_id, "u_light_position");
-	uniform.ambient_material_id = glGetUniformLocation(program_id, "u_ambient_material");
-	uniform.specular_material_id = glGetUniformLocation(program_id, "u_specular_material");
-	uniform.shininess_id = glGetUniformLocation(program_id, "u_shininess");
-	uniform.sample_id = glGetUniformLocation(program_id, "u_sample");
+	attrib.mask
+		= R3_ATTRIB_POSITION | R3_ATTRIB_NORMAL | R3_ATTRIB_TEXCOORD | R3_ATTRIB_COLOR;
+	uniform.mask
+		= R3_UNIFORM_MVP | R3_UNIFORM_NORMAL | R3_UNIFORM_LIGHT_POSITION | R3_UNIFORM_AMBIENT_MATERIAL
+		| R3_UNIFORM_SPECULAR_MATERIAL | R3_UNIFORM_SHININESS | R3_UNIFORM_SAMPLE;
+	setup_shader();
 
 	{
-		struct r3_spec *spec = create_cuboid_spec();
+		struct r3_spec *spec = r3_create_cuboid_spec();
 		r3_make_mesh_from_spec(spec, &mesh);
 		free(spec);
 	}
@@ -253,153 +276,4 @@ int main(int argc, char *argv[]) {
 	glDeleteProgram(program_id);
 	r3_quit(&ren);
 	return EXIT_SUCCESS;
-}
-
-struct r3_spec *create_cuboid_spec() {
-	const float colors[3*24] = {
-		// Red
-		1.0, 0.0, 0.0,
-		1.0, 0.0, 0.0,
-		1.0, 0.0, 0.0,
-		1.0, 0.0, 0.0,
-		// Cyan
-		0.0, 1.0, 1.0,
-		0.0, 1.0, 1.0,
-		0.0, 1.0, 1.0,
-		0.0, 1.0, 1.0,
-		// Green
-		0.0, 1.0, 0.0,
-		0.0, 1.0, 0.0,
-		0.0, 1.0, 0.0,
-		0.0, 1.0, 0.0,
-		// Magenta
-		1.0, 0.0, 1.0,
-		1.0, 0.0, 1.0,
-		1.0, 0.0, 1.0,
-		1.0, 0.0, 1.0,
-		// Blue
-		0.0, 0.0, 1.0,
-		0.0, 0.0, 1.0,
-		0.0, 0.0, 1.0,
-		0.0, 0.0, 1.0,
-		// Yellow
-		1.0, 1.0, 0.0,
-		1.0, 1.0, 0.0,
-		1.0, 1.0, 0.0,
-		1.0, 1.0, 0.0,
-	};
-	const float positions[3*24] = {
-		-0.5f, -0.5f, -0.5f,
-		-0.5f, -0.5f,  0.5f,
-		0.5f, -0.5f,  0.5f,
-		0.5f, -0.5f, -0.5f,
-		-0.5f,  0.5f, -0.5f,
-		-0.5f,  0.5f,  0.5f,
-		0.5f,  0.5f,  0.5f,
-		0.5f,  0.5f, -0.5f,
-		-0.5f, -0.5f, -0.5f,
-		-0.5f,  0.5f, -0.5f,
-		0.5f,  0.5f, -0.5f,
-		0.5f, -0.5f, -0.5f,
-		-0.5f, -0.5f, 0.5f,
-		-0.5f,  0.5f, 0.5f,
-		0.5f,  0.5f, 0.5f, 
-		0.5f, -0.5f, 0.5f,
-		-0.5f, -0.5f, -0.5f,
-		-0.5f, -0.5f,  0.5f,
-		-0.5f,  0.5f,  0.5f,
-		-0.5f,  0.5f, -0.5f,
-		0.5f, -0.5f, -0.5f,
-		0.5f, -0.5f,  0.5f,
-		0.5f,  0.5f,  0.5f,
-		0.5f,  0.5f, -0.5f,
-	};
-	const float normals[3*24] = {
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, -1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-	};
-	const float texcoords[2*24] = {
-		0.0f, 0.0f,
-		0.0f, 1.0f,
-		1.0f, 1.0f,
-		1.0f, 0.0f,
-		1.0f, 0.0f,
-		1.0f, 1.0f,
-		0.0f, 1.0f,
-		0.0f, 0.0f,
-		0.0f, 0.0f,
-		0.0f, 1.0f,
-		1.0f, 1.0f,
-		1.0f, 0.0f,
-		0.0f, 0.0f,
-		0.0f, 1.0f,
-		1.0f, 1.0f,
-		1.0f, 0.0f,
-		0.0f, 0.0f,
-		0.0f, 1.0f,
-		1.0f, 1.0f,
-		1.0f, 0.0f,
-		0.0f, 0.0f,
-		0.0f, 1.0f,
-		1.0f, 1.0f,
-		1.0f, 0.0f,
-	};
-	const unsigned short int indices[36] = {
-		0, 2, 1,
-		0, 3, 2, 
-		4, 5, 6,
-		4, 6, 7,
-		8, 9, 10,
-		8, 10, 11, 
-		12, 15, 14,
-		12, 14, 13, 
-		16, 17, 18,
-		16, 18, 19, 
-		20, 23, 22,
-		20, 22, 21
-	};
-
-	void *buf = malloc(sizeof(struct r3_spec) + 24 * sizeof(struct r3_pcnt) + 36 * sizeof(unsigned short int));
-	struct r3_spec *spec = buf;
-	spec->verts.tag = R3_VERTS_PCNT;
-	spec->verts.len = 24;
-	spec->verts.data = sizeof(struct r3_spec) + buf;
-	spec->indices.tag = R3_INDICES_USHORT;
-	spec->indices.len = 36;
-	spec->indices.data = 24 * sizeof(struct r3_pcnt) + sizeof(struct r3_spec) + buf;
-
-	for (int i = 0; i < 24; i++) {
-		spec->verts.pcnt[i] = (struct r3_pcnt) {
-			.position = _v3f(positions[i*3+0], positions[i*3+1], positions[i*3+2]),
-			.color = _v3f(colors[i*3+0], colors[i*3+1], colors[i*3+2]),
-			.normal = _v3f(normals[i*3+0], normals[i*3+1], normals[i*3+2]),
-			.uv = _v2f(texcoords[i*2+0], texcoords[i*2+1]),
-		};
-	}
-
-	memcpy(spec->indices.data, indices, sizeof(unsigned int short) * 36);
-
-	return spec;
 }
