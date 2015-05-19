@@ -6,11 +6,6 @@
 #include <SDL2/SDL_opengles2.h>
 #include <assert.h>
 
-static const GLenum R3_DEFAULT_CLEAR_BITS = GL_COLOR_BUFFER_BIT
-					  | GL_DEPTH_BUFFER_BIT
-					  | GL_STENCIL_BUFFER_BIT;
-static const v3f R3_DEFAULT_CLEAR_COLOR = {.x = 0, .y = 0, .z = 0};
-
 void r3_clear(struct r3_ren *ren) {
 	glClearColor(ren->clear_color.x, ren->clear_color.y, ren->clear_color.z, 1);
 	glClear(ren->clear_bits);
