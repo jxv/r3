@@ -296,10 +296,10 @@ struct r3_spec *r3_create_cuboid_spec() {
 		0.0f, 1.0f,
 		1.0f, 1.0f,
 		1.0f, 0.0f,
-		0.0f, 0.0f,
-		0.0f, 1.0f,
-		1.0f, 1.0f,
 		1.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f,
+		0.0f, 0.0f,
 	};
 	const unsigned short int indices[36] = {
 		0, 2, 1,
