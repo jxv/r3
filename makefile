@@ -1,4 +1,7 @@
 all:
+	xxd -i src/cell_shading.frag > src/cell_shading.frag.h
+	xxd -i src/minimum_shading.frag > src/minimum_shading.frag.h
+	xxd -i src/shading.vert > src/shading.vert.h
 	gcc src/r3.c -c -o src/r3.o -I./include -Wall -Werror -pedantic -std=c11 -ffast-math -g -O3 -lml -lm -lc -D_GNU_SOURCE
 	ar rvs libr3.a src/*.o
 clean:

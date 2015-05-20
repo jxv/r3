@@ -2,3 +2,4 @@
 .*
 *.a
 demo/r3_demo
+src/*.h

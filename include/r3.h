@@ -120,21 +120,20 @@ struct r3_spec {
 };
 
 struct r3_mesh {
+	enum r3_verts_tag verts_tag;
 	unsigned int vbo;
 	unsigned int ibo;
 	unsigned int num_indices;
 };
 
-enum r3_shader_tag {
-	R3_SHADER_NORMAL
-};
-
-struct r3_shader_normal {
+struct r3_shader {
+	unsigned int program_id;
 	struct {
 		int position_id;
 		int normal_id;
 		int texcoord_id;
 		int color_id;
+		int extra_id[0xf];
 	} attrib;
 	struct {
 		int mvp_id;
@@ -144,21 +143,14 @@ struct r3_shader_normal {
 		int specular_material_id;
 		int shininess_id;
 		int sample_id;
+		int extra_id[0xf];
 	} uniform;
-};
-
-struct r3_shader {
-	enum r3_shader_tag tag;
-	unsigned int program_id;
-	union {
-		struct r3_shader_normal normal;
-	};
 };
 
 struct r3_resource {
 	struct r3_mesh mesh;
 	struct r3_shader shader;
-	unsigned int tex_id[32];
+	unsigned int tex_id;
 };
 
 void r3_clear(struct r3_ren *ren);
@@ -166,12 +158,12 @@ void r3_render(struct r3_ren *ren);
 void r3_quit(struct r3_ren *ren);
 
 char* r3_load_tga(const char *fileName, int *width, int *height);
-unsigned int r3_make_shader(const char *src, unsigned int type);
+unsigned int r3_make_shader(const char *src, unsigned int type, int src_len);
 unsigned int r3_load_shader(const char *path, unsigned int type);
 unsigned int r3_make_program(unsigned int vert_shader, unsigned int frag_shader);
-unsigned int r3_make_program_from_src(const char *vert_src, const char *frag_src);
+unsigned int r3_make_program_from_src(const char *vert_src, int vert_src_len, const char *frag_src, int frag_src_len);
 unsigned int r3_load_program_from_path(const char *vert_path, const char *frag_path);
-void r3_set_shader_ids(struct r3_shader *sh);
+void r3_set_shader_normal_ids(struct r3_shader *sh);
 
 void r3_viewport(const struct r3_ren *ren);
 void r3_enable_tests(const struct r3_ren *ren);
