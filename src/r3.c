@@ -160,6 +160,25 @@ void r3_set_shader_normal_ids(struct r3_shader *sh) {
 	sh->uniform.sample_id = glGetUniformLocation(sh->program_id, "u_sample");
 }
 
+void r3_set_shader_texture_ids(struct r3_shader *sh) {
+	glUseProgram(sh->program_id);
+	// Attrib
+	sh->attrib.position_id = glGetAttribLocation(sh->program_id, "a_position");
+	sh->attrib.texcoord_id = glGetAttribLocation(sh->program_id, "a_texcoord");
+	// Uniform
+	sh->uniform.mvp_id = glGetUniformLocation(sh->program_id, "u_mvp");
+	sh->uniform.sample_id = glGetUniformLocation(sh->program_id, "u_sample");
+}
+
+void r3_set_shader_color_ids(struct r3_shader *sh) {
+	glUseProgram(sh->program_id);
+	// Attrib
+	sh->attrib.position_id = glGetAttribLocation(sh->program_id, "a_position");
+	sh->attrib.color_id = glGetAttribLocation(sh->program_id, "a_color");
+	// Uniform
+	sh->uniform.mvp_id = glGetUniformLocation(sh->program_id, "u_mvp");
+}
+
 ssize_t r3_verts_tag_sizeof(enum r3_verts_tag tag) {
 	switch (tag) {
 	case R3_VERTS_PC: return sizeof(struct r3_pc);
@@ -207,8 +226,7 @@ void r3_render_resource(const struct r3_resource *r,
 	// Set uniforms
 	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
 	glUniformMatrix3fv(sh->uniform.normal_id, 1, 0, m3fm4f(mv).val);
-	glUniform3fv(sh->uniform.light_position_id, 1, _v3f(0.25, 0.25, 1).val);
-	glUniform3f(sh->uniform.ambient_material_id, 0.05, 0.05, 0.05);
+	glUniform3fv(sh->uniform.light_position_id, 1, _v3f(0.25, 0.25, 1).val); glUniform3f(sh->uniform.ambient_material_id, 0.05, 0.05, 0.05);
 	glUniform3f(sh->uniform.specular_material_id, 0.5, 0.5, 0.5);
 	glUniform1f(sh->uniform.shininess_id, 100);
 	// Set texture
@@ -232,6 +250,50 @@ void r3_render_resource(const struct r3_resource *r,
 	glDisableVertexAttribArray(sh->attrib.color_id);
 	glDisableVertexAttribArray(sh->attrib.normal_id);
 	glDisableVertexAttribArray(sh->attrib.texcoord_id);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void r3_render_resource_texture(const struct r3_resource *r, m4f mvp) {
+	assert(r->mesh.verts_tag == R3_VERTS_PCNT);
+	glUseProgram(r->shader.program_id);
+	const struct r3_shader *sh = &r->shader;
+	// Set uniforms
+	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
+	// Set texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, r->tex_id);
+	glUniform1i(sh->uniform.sample_id, 0);
+	// VBO & IBO 
+	glBindBuffer(GL_ARRAY_BUFFER, r->mesh.vbo);
+	glEnableVertexAttribArray(sh->attrib.position_id);
+	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), NULL);
+	glEnableVertexAttribArray(sh->attrib.texcoord_id);
+	glVertexAttribPointer(sh->attrib.texcoord_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)(sizeof(v3f) * 3));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r->mesh.ibo);
+	glDrawElements(GL_TRIANGLES, r->mesh.num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(sh->attrib.position_id);
+	glDisableVertexAttribArray(sh->attrib.texcoord_id);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void r3_render_resource_color(const struct r3_resource *r, m4f mvp) {
+	assert(r->mesh.verts_tag == R3_VERTS_PCNT);
+	glUseProgram(r->shader.program_id);
+	const struct r3_shader *sh = &r->shader;
+	// Set uniforms
+	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
+	// Set texture
+	glBindBuffer(GL_ARRAY_BUFFER, r->mesh.vbo);
+	glEnableVertexAttribArray(sh->attrib.position_id);
+	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), NULL);
+	glEnableVertexAttribArray(sh->attrib.color_id);
+	glVertexAttribPointer(sh->attrib.color_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)sizeof(v3f));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r->mesh.ibo);
+	glDrawElements(GL_TRIANGLES, r->mesh.num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(sh->attrib.position_id);
+	glDisableVertexAttribArray(sh->attrib.color_id);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -259,6 +321,22 @@ void r3_make_normal_shader(struct r3_shader *sh) {
 		(const char*)shader_minimum_frag, shader_minimum_frag_len
 	);
 	r3_set_shader_normal_ids(sh);
+}
+
+void r3_make_texture_shader(struct r3_shader *sh) {
+	sh->program_id = r3_make_program_from_src(
+		(const char*)shader_texture_vert, shader_texture_vert_len,
+		(const char*)shader_texture_frag, shader_texture_frag_len
+	);
+	r3_set_shader_texture_ids(sh);
+}
+
+void r3_make_color_shader(struct r3_shader *sh) {
+	sh->program_id = r3_make_program_from_src(
+		(const char*)shader_color_vert, shader_color_vert_len,
+		(const char*)shader_color_frag, shader_color_frag_len
+	);
+	r3_set_shader_color_ids(sh);
 }
 
 void r3_break_mesh(const struct r3_mesh *m) {

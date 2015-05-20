@@ -173,8 +173,12 @@ struct r3_spec *r3_create_cuboid_spec();
 
 void r3_render_resource(const struct r3_resource *r,
 			m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
+void r3_render_resource_texture(const struct r3_resource *r, m4f mvp);
+void r3_render_resource_color(const struct r3_resource *r, m4f mvp);
 unsigned int r3_load_tga_texture(const char *path);
 void r3_make_normal_shader(struct r3_shader *sh);
+void r3_make_texture_shader(struct r3_shader *sh);
+void r3_make_color_shader(struct r3_shader *sh);
 void r3_break_mesh(const struct r3_mesh *m);
 void r3_break_shader(const struct r3_shader *sh);
 
