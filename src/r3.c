@@ -10,6 +10,12 @@
 #include "../shader/cell.frag.h"
 #include "../shader/minimum.frag.h"
 
+#include "../shader/color.vert.h"
+#include "../shader/color.frag.h"
+
+#include "../shader/texture.vert.h"
+#include "../shader/texture.frag.h"
+
 void r3_clear(struct r3_ren *ren) {
 	glClearColor(ren->clear_color.x, ren->clear_color.y, ren->clear_color.z, 1);
 	glClear(ren->clear_bits);
