@@ -6,9 +6,9 @@
 #include <SDL2/SDL_opengles2.h>
 #include <assert.h>
 
-#include "shading.vert.h"
-#include "cell_shading.frag.h"
-#include "minimum_shading.frag.h"
+#include "../shader/normal.vert.h"
+#include "../shader/cell.frag.h"
+#include "../shader/minimum.frag.h"
 
 void r3_clear(struct r3_ren *ren) {
 	glClearColor(ren->clear_color.x, ren->clear_color.y, ren->clear_color.z, 1);
@@ -399,8 +399,8 @@ unsigned int r3_load_tga_texture(const char *path) {
 
 void r3_make_normal_shader(struct r3_shader *sh) {
 	sh->program_id = r3_make_program_from_src(
-		(const char*)src_shading_vert, src_shading_vert_len,
-		(const char*)src_minimum_shading_frag, src_minimum_shading_frag_len
+		(const char*)shader_normal_vert, shader_normal_vert_len,
+		(const char*)shader_minimum_frag, shader_minimum_frag_len
 	);
 	r3_set_shader_normal_ids(sh);
 }
