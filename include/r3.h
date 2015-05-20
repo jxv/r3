@@ -147,12 +147,6 @@ struct r3_shader {
 	} uniform;
 };
 
-struct r3_resource {
-	struct r3_mesh mesh;
-	struct r3_shader shader;
-	unsigned int tex_id;
-};
-
 void r3_clear(struct r3_ren *ren);
 void r3_render(struct r3_ren *ren);
 void r3_quit(struct r3_ren *ren);
@@ -171,10 +165,10 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m);
 
 struct r3_spec *r3_create_cuboid_spec();
 
-void r3_render_resource(const struct r3_resource *r,
+void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id,
 			m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
-void r3_render_resource_texture(const struct r3_resource *r, m4f mvp);
-void r3_render_resource_color(const struct r3_resource *r, m4f mvp);
+void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id, m4f mvp);
+void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mvp);
 unsigned int r3_load_tga_texture(const char *path);
 void r3_make_normal_shader(struct r3_shader *sh);
 void r3_make_texture_shader(struct r3_shader *sh);

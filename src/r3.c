@@ -218,11 +218,10 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m) {
 	m->verts_tag = spec->verts.tag;
 }
 
-void r3_render_resource(const struct r3_resource *r,
+void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id,
 			m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess) {
-	assert(r->mesh.verts_tag == R3_VERTS_PCNT);
-	glUseProgram(r->shader.program_id);
-	const struct r3_shader *sh = &r->shader;
+	assert(m->verts_tag == R3_VERTS_PCNT);
+	glUseProgram(sh->program_id);
 	// Set uniforms
 	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
 	glUniformMatrix3fv(sh->uniform.normal_id, 1, 0, m3fm4f(mv).val);
@@ -231,10 +230,10 @@ void r3_render_resource(const struct r3_resource *r,
 	glUniform1f(sh->uniform.shininess_id, 100);
 	// Set texture
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, r->tex_id);
+	glBindTexture(GL_TEXTURE_2D, tex_id);
 	glUniform1i(sh->uniform.sample_id, 0);
 	// VBO & IBO 
-	glBindBuffer(GL_ARRAY_BUFFER, r->mesh.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glEnableVertexAttribArray(sh->attrib.position_id);
 	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), NULL);
 	glEnableVertexAttribArray(sh->attrib.color_id);
@@ -243,8 +242,8 @@ void r3_render_resource(const struct r3_resource *r,
 	glVertexAttribPointer(sh->attrib.normal_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)(sizeof(v3f) * 2));
 	glEnableVertexAttribArray(sh->attrib.texcoord_id);
 	glVertexAttribPointer(sh->attrib.texcoord_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)(sizeof(v3f) * 3));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r->mesh.ibo);
-	glDrawElements(GL_TRIANGLES, r->mesh.num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh->attrib.position_id);
 	glDisableVertexAttribArray(sh->attrib.color_id);
@@ -253,44 +252,42 @@ void r3_render_resource(const struct r3_resource *r,
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_resource_texture(const struct r3_resource *r, m4f mvp) {
-	assert(r->mesh.verts_tag == R3_VERTS_PCNT);
-	glUseProgram(r->shader.program_id);
-	const struct r3_shader *sh = &r->shader;
+void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id, m4f mvp) {
+	assert(m->verts_tag == R3_VERTS_PCNT);
+	glUseProgram(sh->program_id);
 	// Set uniforms
 	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
 	// Set texture
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, r->tex_id);
+	glBindTexture(GL_TEXTURE_2D, tex_id);
 	glUniform1i(sh->uniform.sample_id, 0);
 	// VBO & IBO 
-	glBindBuffer(GL_ARRAY_BUFFER, r->mesh.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glEnableVertexAttribArray(sh->attrib.position_id);
 	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), NULL);
 	glEnableVertexAttribArray(sh->attrib.texcoord_id);
 	glVertexAttribPointer(sh->attrib.texcoord_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)(sizeof(v3f) * 3));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r->mesh.ibo);
-	glDrawElements(GL_TRIANGLES, r->mesh.num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh->attrib.position_id);
 	glDisableVertexAttribArray(sh->attrib.texcoord_id);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_resource_color(const struct r3_resource *r, m4f mvp) {
-	assert(r->mesh.verts_tag == R3_VERTS_PCNT);
-	glUseProgram(r->shader.program_id);
-	const struct r3_shader *sh = &r->shader;
+void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mvp) {
+	assert(m->verts_tag == R3_VERTS_PCNT);
+	glUseProgram(sh->program_id);
 	// Set uniforms
 	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
 	// Set texture
-	glBindBuffer(GL_ARRAY_BUFFER, r->mesh.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glEnableVertexAttribArray(sh->attrib.position_id);
 	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), NULL);
 	glEnableVertexAttribArray(sh->attrib.color_id);
 	glVertexAttribPointer(sh->attrib.color_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)sizeof(v3f));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r->mesh.ibo);
-	glDrawElements(GL_TRIANGLES, r->mesh.num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh->attrib.position_id);
 	glDisableVertexAttribArray(sh->attrib.color_id);

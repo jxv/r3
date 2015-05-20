@@ -14,17 +14,28 @@
 #endif
 
 enum res_mode {
-	RES_NORMAL,
+	RES_NORMAL = 0,
 	RES_COLOR,
 	RES_TEXTURE,
+	RES_MODE_COUNT
+};
+
+struct res {
+	enum res_mode mode;
+	struct r3_mesh mesh;
+	struct r3_shader shader[RES_MODE_COUNT];
+	unsigned int tex_id;
 };
 
 int main(int argc, char *argv[]) {
 	const float dt = 1 / 60.0;
 	const float aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
+	const v3f light_pos = _v3f(0.25, 0.25, 1);
+	const v3f ambient = _v3f(0.05, 0.05, 0.05);
+	const v3f specular = _v3f(0.5, 0.5, 0.5);
+	const float shininess = 100;
 	struct r3_ren ren;
-	struct r3_resource res[3];
-	enum res_mode mode;
+	struct res res;
 	m4f mv, mvp;
 	float angle = 0;
 	{ // Init
@@ -34,15 +45,14 @@ int main(int argc, char *argv[]) {
 		ren.clear_color = _v3f(0.2, 0.2, 0.2);
 	}
 	{ // Setup cube
-		r3_make_normal_shader(&res[0].shader);
-		r3_make_color_shader(&res[1].shader);
-		r3_make_texture_shader(&res[2].shader);
+		r3_make_normal_shader(res.shader + RES_NORMAL);
+		r3_make_color_shader(res.shader + RES_COLOR);
+		r3_make_texture_shader(res.shader + RES_TEXTURE);
 		struct r3_spec *spec = r3_create_cuboid_spec();
-		r3_make_mesh_from_spec(spec, &res[0].mesh);
-		res[2].mesh = res[1].mesh = res[0].mesh;
+		r3_make_mesh_from_spec(spec, &res.mesh);
 		free(spec);
-		res[0].tex_id = r3_load_tga_texture("res/img/base_map.tga");
-		res[2].tex_id = res[1].tex_id = res[0].tex_id;
+		res.tex_id = r3_load_tga_texture("res/img/base_map.tga");
+		res.mode = RES_COLOR;
 	}
 	bool done = false;
 	while (!done) { // Main loop
@@ -53,12 +63,12 @@ int main(int argc, char *argv[]) {
 					done = true;
 				}
 				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_LEFT) {
-					mode++;
-					mode %= 3;
+					res.mode++;
+					res.mode %= RES_MODE_COUNT;
 				}
 				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RIGHT) {
-					mode += 3 - 1;
-					mode %= 3;
+					res.mode += RES_MODE_COUNT - 1;
+					res.mode %= RES_MODE_COUNT;
 				}
 			}
 		}
@@ -73,15 +83,18 @@ int main(int argc, char *argv[]) {
 		{ // Render
 			r3_viewport(&ren);
 			r3_clear(&ren);
-			switch (mode) {
+			switch (res.mode) {
 			case RES_NORMAL:
-				r3_render_resource(&res[0], mv, mvp, _v3f(0.25, 0.25, 1), _v3f(0.05, 0.05, 0.05), _v3f(0.5, 0.5, 0.5), 100);
+				r3_render_normal(
+					&res.mesh, res.shader + res.mode, res.tex_id, mv, mvp,
+					light_pos, ambient, specular, shininess
+				);
 				break;
 			case RES_COLOR:
-				r3_render_resource_color(&res[1], mvp);
+				r3_render_color(&res.mesh, res.shader + res.mode, mvp);
 				break;
 			case RES_TEXTURE:
-				r3_render_resource_texture(&res[2], mvp);
+				r3_render_texture(&res.mesh, res.shader + res.mode, res.tex_id, mvp);
 				break;
 			}
 			r3_render(&ren);
@@ -89,10 +102,10 @@ int main(int argc, char *argv[]) {
 		SDL_Delay(16);
 	}
 	// Clean up
-	r3_break_mesh(&res[0].mesh);
-	r3_break_shader(&res[0].shader);
-	r3_break_shader(&res[1].shader);
-	r3_break_shader(&res[2].shader);
+	r3_break_mesh(&res.mesh);
+	for (int i = 0; i < RES_MODE_COUNT; i++) {
+		r3_break_shader(res.shader + i);
+	}
 	r3_quit(&ren);
 	return EXIT_SUCCESS;
 }
