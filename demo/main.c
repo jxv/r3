@@ -74,8 +74,8 @@ int main(int argc, char *argv[]) {
 		}
 		{ // Update
 			angle = fmodf(angle + dt * 2, M_PI * 2);
-			const m4f persp = perspm4f(45, aspect, 1, 20);
-			const m4f translate = translatem4f(_v3f(0,0,-7));
+			const m4f persp = perspf(45, aspect, 1, 20);
+			const m4f translate = translatef(_v3f(0,0,-7));
 			const m4f rot = rotm4f(angle, _v3f(0.9,0.5,0.2));
 			mv = addm4f(mulm4f(rot, scalem4f(eyem4f(), _v3f(3,3,3))), translate);
 			mvp = mulm4f(persp, mv);
