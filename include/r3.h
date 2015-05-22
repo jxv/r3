@@ -151,13 +151,13 @@ void r3_clear(struct r3_ren *ren);
 void r3_render(struct r3_ren *ren);
 void r3_quit(struct r3_ren *ren);
 
+unsigned int r3_load_tga_texture(const char *path);
 char* r3_load_tga(const char *fileName, int *width, int *height);
 unsigned int r3_make_shader(const char *src, unsigned int type, int src_len);
 unsigned int r3_load_shader(const char *path, unsigned int type);
 unsigned int r3_make_program(unsigned int vert_shader, unsigned int frag_shader);
 unsigned int r3_make_program_from_src(const char *vert_src, int vert_src_len, const char *frag_src, int frag_src_len);
 unsigned int r3_load_program_from_path(const char *vert_path, const char *frag_path);
-void r3_set_shader_normal_ids(struct r3_shader *sh);
 
 void r3_viewport(const struct r3_ren *ren);
 void r3_enable_tests(const struct r3_ren *ren);
@@ -166,13 +166,15 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m);
 struct r3_spec *r3_create_cuboid_spec();
 
 void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id,
-			m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
+	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
 void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id, m4f mvp);
 void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mvp);
-unsigned int r3_load_tga_texture(const char *path);
+
+void r3_make_cell_shader(struct r3_shader *sh);
 void r3_make_normal_shader(struct r3_shader *sh);
 void r3_make_texture_shader(struct r3_shader *sh);
 void r3_make_color_shader(struct r3_shader *sh);
+
 void r3_break_mesh(const struct r3_mesh *m);
 void r3_break_shader(const struct r3_shader *sh);
 

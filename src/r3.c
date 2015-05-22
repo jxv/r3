@@ -6,8 +6,10 @@
 #include <GLES2/gl2.h>
 
 #include "../shader/normal.vert.h"
+#include "../shader/normal.frag.h"
+
+#include "../shader/cell.vert.h"
 #include "../shader/cell.frag.h"
-#include "../shader/minimum.frag.h"
 
 #include "../shader/color.vert.h"
 #include "../shader/color.frag.h"
@@ -224,7 +226,7 @@ void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, unsig
 	glUseProgram(sh->program_id);
 	// Set uniforms
 	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
-	glUniformMatrix3fv(sh->uniform.normal_id, 1, 0, m3fm4f(mv).val);
+	glUniformMatrix3fv(sh->uniform.normal_id, 1, 0, m3m4f(mv).val);
 	glUniform3fv(sh->uniform.light_position_id, 1, _v3f(0.25, 0.25, 1).val); glUniform3f(sh->uniform.ambient_material_id, 0.05, 0.05, 0.05);
 	glUniform3f(sh->uniform.specular_material_id, 0.5, 0.5, 0.5);
 	glUniform1f(sh->uniform.shininess_id, 100);
@@ -312,10 +314,18 @@ unsigned int r3_load_tga_texture(const char *path) {
 	return 0;
 }
 
+void r3_make_cell_shader(struct r3_shader *sh) {
+	sh->program_id = r3_make_program_from_src(
+		(const char*)shader_cell_vert, shader_cell_vert_len,
+		(const char*)shader_cell_frag, shader_cell_frag_len
+	);
+	r3_set_shader_normal_ids(sh);
+}
+
 void r3_make_normal_shader(struct r3_shader *sh) {
 	sh->program_id = r3_make_program_from_src(
 		(const char*)shader_normal_vert, shader_normal_vert_len,
-		(const char*)shader_minimum_frag, shader_minimum_frag_len
+		(const char*)shader_normal_frag, shader_normal_frag_len
 	);
 	r3_set_shader_normal_ids(sh);
 }
