@@ -17,29 +17,35 @@
 #include "../shader/texture.vert.h"
 #include "../shader/texture.frag.h"
 
-void r3_clear(struct r3_ren *ren) {
+void r3_clear(struct r3_ren *ren)
+{
 	glClearColor(ren->clear_color.x, ren->clear_color.y, ren->clear_color.z, 1);
 	glClear(ren->clear_bits);
 }
 
-void r3_render(struct r3_ren *ren) {
+void r3_render(struct r3_ren *ren)
+{
 	ren->render(ren);
 }
 
-void r3_viewport(const struct r3_ren *ren) {
+void r3_viewport(const struct r3_ren *ren)
+{
 	glViewport(0, 0, ren->window_size.x, ren->window_size.y);
 }
 
-void  r3_enable_tests(const struct r3_ren *ren) {
+void  r3_enable_tests(const struct r3_ren *ren)
+{
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 }
 
-void r3_quit(struct r3_ren *ren) {
+void r3_quit(struct r3_ren *ren)
+{
 	ren->quit(ren);
 }
 
-char *r3_load_file(const char *path) {
+char *r3_load_file(const char *path)
+{
 	FILE *file = fopen(path, "rb");
 	fseek(file, 0, SEEK_END);
 	int len = ftell(file);
@@ -53,7 +59,8 @@ char *r3_load_file(const char *path) {
 	return data;
 }
 
-char* r3_load_tga(const char *fileName, int *width, int *height) {
+char* r3_load_tga(const char *fileName, int *width, int *height)
+{
 	char *buf = NULL;
 	FILE *f;
 	unsigned char tgaheader[12];
@@ -86,7 +93,8 @@ char* r3_load_tga(const char *fileName, int *width, int *height) {
 	return buf;
 }
 
-GLuint r3_make_shader(const char *src, GLenum type, int src_len) {
+unsigned int r3_make_shader(const char *src, GLenum type, int src_len)
+{
 	unsigned int shader = glCreateShader(type);
 	glShaderSource(shader, 1, &src, src_len == 0 ? NULL : &src_len);
 	glCompileShader(shader);
@@ -103,7 +111,8 @@ GLuint r3_make_shader(const char *src, GLenum type, int src_len) {
 	return shader;
 }
 
-GLuint r3_load_shader(const char *path, GLenum type) {
+unsigned int r3_load_shader(const char *path, GLenum type)
+{
 	char *data = r3_load_file(path);
 	assert(data != NULL);
 	unsigned int result = r3_make_shader(data, type, 0);
@@ -111,7 +120,8 @@ GLuint r3_load_shader(const char *path, GLenum type) {
 	return result;
 } 
 
-GLuint r3_make_program(unsigned int vert_shader, unsigned int frag_shader) {
+unsigned int r3_make_program(unsigned int vert_shader, unsigned int frag_shader)
+{
 	unsigned int program_id = glCreateProgram();
 	glAttachShader(program_id, vert_shader);
 	glAttachShader(program_id, frag_shader);
@@ -133,19 +143,22 @@ GLuint r3_make_program(unsigned int vert_shader, unsigned int frag_shader) {
 	return program_id;
 }
 
-GLuint r3_make_program_from_src(const char *vert_src, int vert_src_len, const char *frag_src, int frag_src_len) {
+GLuint r3_make_program_from_src(const char *vert_src, int vert_src_len, const char *frag_src, int frag_src_len)
+{
 	const unsigned int vert = r3_make_shader(vert_src, GL_VERTEX_SHADER, vert_src_len);
 	const unsigned int frag = r3_make_shader(frag_src, GL_FRAGMENT_SHADER, frag_src_len);
 	return r3_make_program(vert, frag);
 }
 
-GLuint r3_load_program_from_path(const char *vert_path, const char *frag_path) {
+GLuint r3_load_program_from_path(const char *vert_path, const char *frag_path)
+{
 	unsigned int vert = r3_load_shader(vert_path, GL_VERTEX_SHADER);
 	unsigned int frag = r3_load_shader(frag_path, GL_FRAGMENT_SHADER);
 	return r3_make_program(vert, frag);
 }
 
-void r3_set_shader_normal_ids(struct r3_shader *sh) {
+void r3_set_shader_normal_ids(struct r3_shader *sh)
+{
 	glUseProgram(sh->program_id);
 	// Attrib
 	sh->attrib.position_id = glGetAttribLocation(sh->program_id, "a_position");
@@ -162,7 +175,8 @@ void r3_set_shader_normal_ids(struct r3_shader *sh) {
 	sh->uniform.sample_id = glGetUniformLocation(sh->program_id, "u_sample");
 }
 
-void r3_set_shader_texture_ids(struct r3_shader *sh) {
+void r3_set_shader_texture_ids(struct r3_shader *sh)
+{
 	glUseProgram(sh->program_id);
 	// Attrib
 	sh->attrib.position_id = glGetAttribLocation(sh->program_id, "a_position");
@@ -172,7 +186,8 @@ void r3_set_shader_texture_ids(struct r3_shader *sh) {
 	sh->uniform.sample_id = glGetUniformLocation(sh->program_id, "u_sample");
 }
 
-void r3_set_shader_color_ids(struct r3_shader *sh) {
+void r3_set_shader_color_ids(struct r3_shader *sh)
+{
 	glUseProgram(sh->program_id);
 	// Attrib
 	sh->attrib.position_id = glGetAttribLocation(sh->program_id, "a_position");
@@ -181,7 +196,8 @@ void r3_set_shader_color_ids(struct r3_shader *sh) {
 	sh->uniform.mvp_id = glGetUniformLocation(sh->program_id, "u_mvp");
 }
 
-ssize_t r3_verts_tag_sizeof(enum r3_verts_tag tag) {
+ssize_t r3_verts_tag_sizeof(enum r3_verts_tag tag)
+{
 	switch (tag) {
 	case R3_VERTS_PC: return sizeof(struct r3_pc);
 	case R3_VERTS_PN: return sizeof(struct r3_pn);
@@ -193,11 +209,13 @@ ssize_t r3_verts_tag_sizeof(enum r3_verts_tag tag) {
 	assert(false);
 }
 
-ssize_t r3_verts_sizeof(const struct r3_verts *verts) {
+ssize_t r3_verts_sizeof(const struct r3_verts *verts)
+{
 	return verts->len * r3_verts_tag_sizeof(verts->tag);
 }
 
-ssize_t r3_indices_tag_sizeof(enum r3_indices_tag tag) {
+ssize_t r3_indices_tag_sizeof(enum r3_indices_tag tag)
+{
 	switch (tag) {
 	case R3_INDICES_USHORT: return sizeof(unsigned int short);
 	case R3_INDICES_UINT: return sizeof(unsigned int);
@@ -205,11 +223,13 @@ ssize_t r3_indices_tag_sizeof(enum r3_indices_tag tag) {
 	assert(false);
 }
 
-ssize_t r3_indices_sizeof(const struct r3_indices *indices) {
+ssize_t r3_indices_sizeof(const struct r3_indices *indices)
+{
 	return indices->len * r3_indices_tag_sizeof(indices->tag);
 }
 
-void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m) {
+void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m)
+{
 	glGenBuffers(1, &m->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glBufferData(GL_ARRAY_BUFFER, r3_verts_sizeof(&spec->verts), spec->verts.data, GL_STATIC_DRAW);
@@ -221,13 +241,15 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m) {
 }
 
 void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id,
-			m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess) {
+		m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess)
+{
 	assert(m->verts_tag == R3_VERTS_PCNT);
 	glUseProgram(sh->program_id);
 	// Set uniforms
 	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
 	glUniformMatrix3fv(sh->uniform.normal_id, 1, 0, m3m4f(mv).val);
-	glUniform3fv(sh->uniform.light_position_id, 1, _v3f(0.25, 0.25, 1).val); glUniform3f(sh->uniform.ambient_material_id, 0.05, 0.05, 0.05);
+	glUniform3fv(sh->uniform.light_position_id, 1, _v3f(0.25, 0.25, 1).val);
+	glUniform3f(sh->uniform.ambient_material_id, 0.05, 0.05, 0.05);
 	glUniform3f(sh->uniform.specular_material_id, 0.5, 0.5, 0.5);
 	glUniform1f(sh->uniform.shininess_id, 100);
 	// Set texture
@@ -254,7 +276,8 @@ void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, unsig
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id, m4f mvp) {
+void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id, m4f mvp)
+{
 	assert(m->verts_tag == R3_VERTS_PCNT);
 	glUseProgram(sh->program_id);
 	// Set uniforms
@@ -277,7 +300,8 @@ void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsi
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mvp) {
+void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mvp)
+{
 	assert(m->verts_tag == R3_VERTS_PCNT);
 	glUseProgram(sh->program_id);
 	// Set uniforms
@@ -296,7 +320,8 @@ void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-unsigned int r3_load_tga_texture(const char *path) {
+unsigned int r3_load_tga_texture(const char *path)
+{
 	int width, height;
 	char *data = r3_load_tga(path, &width, &height);
 	if (data) {
@@ -314,7 +339,8 @@ unsigned int r3_load_tga_texture(const char *path) {
 	return 0;
 }
 
-void r3_make_cell_shader(struct r3_shader *sh) {
+void r3_make_cell_shader(struct r3_shader *sh)
+{
 	sh->program_id = r3_make_program_from_src(
 		(const char*)shader_cell_vert, shader_cell_vert_len,
 		(const char*)shader_cell_frag, shader_cell_frag_len
@@ -322,7 +348,8 @@ void r3_make_cell_shader(struct r3_shader *sh) {
 	r3_set_shader_normal_ids(sh);
 }
 
-void r3_make_normal_shader(struct r3_shader *sh) {
+void r3_make_normal_shader(struct r3_shader *sh)
+{
 	sh->program_id = r3_make_program_from_src(
 		(const char*)shader_normal_vert, shader_normal_vert_len,
 		(const char*)shader_normal_frag, shader_normal_frag_len
@@ -330,7 +357,8 @@ void r3_make_normal_shader(struct r3_shader *sh) {
 	r3_set_shader_normal_ids(sh);
 }
 
-void r3_make_texture_shader(struct r3_shader *sh) {
+void r3_make_texture_shader(struct r3_shader *sh)
+{
 	sh->program_id = r3_make_program_from_src(
 		(const char*)shader_texture_vert, shader_texture_vert_len,
 		(const char*)shader_texture_frag, shader_texture_frag_len
@@ -338,7 +366,8 @@ void r3_make_texture_shader(struct r3_shader *sh) {
 	r3_set_shader_texture_ids(sh);
 }
 
-void r3_make_color_shader(struct r3_shader *sh) {
+void r3_make_color_shader(struct r3_shader *sh)
+{
 	sh->program_id = r3_make_program_from_src(
 		(const char*)shader_color_vert, shader_color_vert_len,
 		(const char*)shader_color_frag, shader_color_frag_len
@@ -346,11 +375,86 @@ void r3_make_color_shader(struct r3_shader *sh) {
 	r3_set_shader_color_ids(sh);
 }
 
-void r3_break_mesh(const struct r3_mesh *m) {
+void r3_break_mesh(const struct r3_mesh *m)
+{
 	glDeleteBuffers(1, &m->vbo);
 	glDeleteBuffers(1, &m->ibo);
 }
 
-void r3_break_shader(const struct r3_shader *sh) {
+void r3_break_shader(const struct r3_shader *sh)
+{
 	glDeleteProgram(sh->program_id);
+}
+
+ssize_t r3_offset(enum r3_verts_tag tag, enum r3_vert vert)
+{
+	switch (tag) {
+	case R3_VERTS_PC:
+		switch (vert) {
+		case R3_POSITION:
+			return 0;
+		case R3_COLOR:
+			return sizeof(v3f);
+		default:
+			assert(false);
+		}
+		break;
+	case R3_VERTS_PN:
+		switch (vert) {
+		case R3_POSITION:
+			return 0;
+		case R3_NORMAL:
+			return sizeof(v3f);
+		default:
+			assert(false);
+		}
+		break;
+	case R3_VERTS_PT:
+		switch (vert) {
+		case R3_POSITION:
+			return 0;
+		case R3_TEXCOORD:
+			return sizeof(v3f);
+		default:
+			assert(false);
+		}
+		break;
+	case R3_VERTS_PCN:
+		switch (vert) {
+		case R3_POSITION:
+			return 0;
+		case R3_COLOR:
+			return sizeof(v3f);
+		case R3_NORMAL:
+			return sizeof(v3f) + sizeof(v3f);
+		default:
+			assert(false);
+		}
+		break;
+	case R3_VERTS_PNT:
+		switch (vert) {
+		case R3_POSITION:
+			return 0;
+		case R3_NORMAL:
+			return sizeof(v3f);
+		case R3_TEXCOORD:
+			return sizeof(v3f) + sizeof(v3f);
+		default:
+			assert(false);
+		}
+		break;
+	case R3_VERTS_PCNT:
+		switch (vert) {
+		case R3_POSITION:
+			return 0;
+		case R3_COLOR:
+			return sizeof(v3f);
+		case R3_NORMAL:
+			return sizeof(v3f) + sizeof(v3f);
+		case R3_TEXCOORD:
+			return sizeof(v3f) + sizeof(v3f) + sizeof(v3f);
+		}
+		break;
+	}
+	assert(false);
 }

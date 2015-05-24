@@ -2,6 +2,7 @@
 #define R3_H
 
 #include <ml.h>
+#include <stdlib.h>
 
 struct r3_ren {
 	v2i window_size;
@@ -10,6 +11,13 @@ struct r3_ren {
 	void *backend;
 	void (*render)(struct r3_ren *);
 	void (*quit)(struct r3_ren *);
+};
+
+enum r3_vert {
+	R3_POSITION,
+	R3_COLOR,
+	R3_NORMAL,
+	R3_TEXCOORD,
 };
 
 struct r3_pc {
@@ -79,8 +87,8 @@ struct r3_pcnt {
 enum r3_verts_tag {
 	R3_VERTS_PC,
 	R3_VERTS_PN,
-	R3_VERTS_PCN,
 	R3_VERTS_PT,
+	R3_VERTS_PCN,
 	R3_VERTS_PNT,
 	R3_VERTS_PCNT,
 };
@@ -133,17 +141,19 @@ struct r3_shader {
 		int normal_id;
 		int texcoord_id;
 		int color_id;
-		int extra_id[0xf];
 	} attrib;
 	struct {
 		int mvp_id;
 		int normal_id;
 		int light_position_id;
 		int ambient_material_id;
+		int diffuse_material_id;
 		int specular_material_id;
 		int shininess_id;
 		int sample_id;
-		int extra_id[0xf];
+		int coefficients_id;
+		int offset_id;
+		int threshold_id;
 	} uniform;
 };
 
@@ -177,5 +187,12 @@ void r3_make_color_shader(struct r3_shader *sh);
 
 void r3_break_mesh(const struct r3_mesh *m);
 void r3_break_shader(const struct r3_shader *sh);
+
+ssize_t r3_verts_tag_sizeof(enum r3_verts_tag tag);
+ssize_t r3_verts_sizeof(const struct r3_verts *verts);
+ssize_t r3_indices_tag_sizeof(enum r3_indices_tag tag);
+ssize_t r3_indices_sizeof(const struct r3_indices *indices);
+
+ssize_t r3_offset(enum r3_verts_tag tag, enum r3_vert vert);
 
 #endif
