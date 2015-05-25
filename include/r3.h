@@ -146,9 +146,9 @@ struct r3_shader {
 		int mvp_id;
 		int normal_id;
 		int light_position_id;
-		int ambient_material_id;
-		int diffuse_material_id;
-		int specular_material_id;
+		int ambient_id;
+		int diffuse_id;
+		int specular_id;
 		int shininess_id;
 		int sample_id;
 		int coefficients_id;
@@ -175,15 +175,18 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m);
 
 struct r3_spec *r3_create_cuboid_spec();
 
-void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id,
-	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
+void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv, m4f mvp,
+	v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess);
 void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id, m4f mvp);
 void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mvp);
+void r3_render_color_normal_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id,
+	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
 
 void r3_make_cell_shader(struct r3_shader *sh);
 void r3_make_normal_shader(struct r3_shader *sh);
 void r3_make_texture_shader(struct r3_shader *sh);
 void r3_make_color_shader(struct r3_shader *sh);
+void r3_make_color_normal_texture_shader(struct r3_shader *sh);
 
 void r3_break_mesh(const struct r3_mesh *m);
 void r3_break_shader(const struct r3_shader *sh);

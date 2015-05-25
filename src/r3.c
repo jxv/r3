@@ -17,6 +17,9 @@
 #include "../shader/texture.vert.h"
 #include "../shader/texture.frag.h"
 
+#include "../shader/color_normal_texture.vert.h"
+#include "../shader/color_normal_texture.frag.h"
+
 void r3_clear(struct r3_ren *ren)
 {
 	glClearColor(ren->clear_color.x, ren->clear_color.y, ren->clear_color.z, 1);
@@ -163,14 +166,13 @@ void r3_set_shader_normal_ids(struct r3_shader *sh)
 	// Attrib
 	sh->attrib.position_id = glGetAttribLocation(sh->program_id, "a_position");
 	sh->attrib.normal_id = glGetAttribLocation(sh->program_id, "a_normal");
-	sh->attrib.color_id = glGetAttribLocation(sh->program_id, "a_color");
-	sh->attrib.texcoord_id = glGetAttribLocation(sh->program_id, "a_texcoord");
 	// Uniform
 	sh->uniform.mvp_id = glGetUniformLocation(sh->program_id, "u_mvp");
 	sh->uniform.normal_id = glGetUniformLocation(sh->program_id, "u_normal");
 	sh->uniform.light_position_id = glGetUniformLocation(sh->program_id, "u_light_position");
-	sh->uniform.ambient_material_id = glGetUniformLocation(sh->program_id, "u_ambient_material");
-	sh->uniform.specular_material_id = glGetUniformLocation(sh->program_id, "u_specular_material");
+	sh->uniform.ambient_id = glGetUniformLocation(sh->program_id, "u_ambient");
+	sh->uniform.diffuse_id = glGetUniformLocation(sh->program_id, "u_diffuse");
+	sh->uniform.specular_id = glGetUniformLocation(sh->program_id, "u_specular");
 	sh->uniform.shininess_id = glGetUniformLocation(sh->program_id, "u_shininess");
 	sh->uniform.sample_id = glGetUniformLocation(sh->program_id, "u_sample");
 }
@@ -194,6 +196,24 @@ void r3_set_shader_color_ids(struct r3_shader *sh)
 	sh->attrib.color_id = glGetAttribLocation(sh->program_id, "a_color");
 	// Uniform
 	sh->uniform.mvp_id = glGetUniformLocation(sh->program_id, "u_mvp");
+}
+
+void r3_set_shader_color_normal_texture_ids(struct r3_shader *sh)
+{
+	glUseProgram(sh->program_id);
+	// Attrib
+	sh->attrib.position_id = glGetAttribLocation(sh->program_id, "a_position");
+	sh->attrib.normal_id = glGetAttribLocation(sh->program_id, "a_normal");
+	sh->attrib.color_id = glGetAttribLocation(sh->program_id, "a_color");
+	sh->attrib.texcoord_id = glGetAttribLocation(sh->program_id, "a_texcoord");
+	// Uniform
+	sh->uniform.mvp_id = glGetUniformLocation(sh->program_id, "u_mvp");
+	sh->uniform.normal_id = glGetUniformLocation(sh->program_id, "u_normal");
+	sh->uniform.light_position_id = glGetUniformLocation(sh->program_id, "u_light_position");
+	sh->uniform.ambient_id = glGetUniformLocation(sh->program_id, "u_ambient_material");
+	sh->uniform.specular_id = glGetUniformLocation(sh->program_id, "u_specular_material");
+	sh->uniform.shininess_id = glGetUniformLocation(sh->program_id, "u_shininess");
+	sh->uniform.sample_id = glGetUniformLocation(sh->program_id, "u_sample");
 }
 
 ssize_t r3_verts_tag_sizeof(enum r3_verts_tag tag)
@@ -240,45 +260,36 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m)
 	m->verts_tag = spec->verts.tag;
 }
 
-void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id,
-		m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess)
+void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv, m4f mvp,
+		v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess)
 {
-	assert(m->verts_tag == R3_VERTS_PCNT);
 	glUseProgram(sh->program_id);
 	// Set uniforms
 	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
 	glUniformMatrix3fv(sh->uniform.normal_id, 1, 0, m3m4f(mv).val);
-	glUniform3fv(sh->uniform.light_position_id, 1, _v3f(0.25, 0.25, 1).val);
-	glUniform3f(sh->uniform.ambient_material_id, 0.05, 0.05, 0.05);
-	glUniform3f(sh->uniform.specular_material_id, 0.5, 0.5, 0.5);
-	glUniform1f(sh->uniform.shininess_id, 100);
-	// Set texture
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex_id);
-	glUniform1i(sh->uniform.sample_id, 0);
+	glUniform3fv(sh->uniform.light_position_id, 1, light_position.val);
+	glUniform3fv(sh->uniform.ambient_id, 1, ambient.val);
+	glUniform3fv(sh->uniform.diffuse_id, 1, diffuse.val);
+	glUniform3fv(sh->uniform.specular_id, 1, specular.val);
+	glUniform1f(sh->uniform.shininess_id, shininess);
 	// VBO & IBO 
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glEnableVertexAttribArray(sh->attrib.position_id);
-	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), NULL);
-	glEnableVertexAttribArray(sh->attrib.color_id);
-	glVertexAttribPointer(sh->attrib.color_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)sizeof(v3f));
+	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
 	glEnableVertexAttribArray(sh->attrib.normal_id);
-	glVertexAttribPointer(sh->attrib.normal_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)(sizeof(v3f) * 2));
-	glEnableVertexAttribArray(sh->attrib.texcoord_id);
-	glVertexAttribPointer(sh->attrib.texcoord_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)(sizeof(v3f) * 3));
+	glVertexAttribPointer(sh->attrib.normal_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh->attrib.position_id);
-	glDisableVertexAttribArray(sh->attrib.color_id);
 	glDisableVertexAttribArray(sh->attrib.normal_id);
-	glDisableVertexAttribArray(sh->attrib.texcoord_id);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id, m4f mvp)
 {
-	assert(m->verts_tag == R3_VERTS_PCNT);
 	glUseProgram(sh->program_id);
 	// Set uniforms
 	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
@@ -289,9 +300,11 @@ void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsi
 	// VBO & IBO 
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glEnableVertexAttribArray(sh->attrib.position_id);
-	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), NULL);
+	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
 	glEnableVertexAttribArray(sh->attrib.texcoord_id);
-	glVertexAttribPointer(sh->attrib.texcoord_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)(sizeof(v3f) * 3));
+	glVertexAttribPointer(sh->attrib.texcoord_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_TEXCOORD));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -302,21 +315,61 @@ void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsi
 
 void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mvp)
 {
-	assert(m->verts_tag == R3_VERTS_PCNT);
 	glUseProgram(sh->program_id);
 	// Set uniforms
 	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
 	// Set texture
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glEnableVertexAttribArray(sh->attrib.position_id);
-	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), NULL);
+	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
 	glEnableVertexAttribArray(sh->attrib.color_id);
-	glVertexAttribPointer(sh->attrib.color_id, 3, GL_FLOAT, GL_FALSE, sizeof(struct r3_pcnt), (void*)sizeof(v3f));
+	glVertexAttribPointer(sh->attrib.color_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_COLOR));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh->attrib.position_id);
 	glDisableVertexAttribArray(sh->attrib.color_id);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void r3_render_color_normal_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id,
+		m4f mv, m4f mvp, v3f light_position, v3f ambient, v3f specular, float shininess)
+{
+	glUseProgram(sh->program_id);
+	// Set uniforms
+	glUniformMatrix4fv(sh->uniform.mvp_id, 1, GL_FALSE, mvp.val);
+	glUniformMatrix3fv(sh->uniform.normal_id, 1, 0, m3m4f(mv).val);
+	glUniform3fv(sh->uniform.light_position_id, 1, light_position.val);
+	glUniform3fv(sh->uniform.ambient_id, 1, ambient.val);
+	glUniform3fv(sh->uniform.specular_id, 1, specular.val);
+	glUniform1f(sh->uniform.shininess_id, shininess);
+	// Set texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex_id);
+	glUniform1i(sh->uniform.sample_id, 0);
+	// VBO & IBO 
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glEnableVertexAttribArray(sh->attrib.position_id);
+	glVertexAttribPointer(sh->attrib.position_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
+	glEnableVertexAttribArray(sh->attrib.color_id);
+	glVertexAttribPointer(sh->attrib.color_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_COLOR));
+	glEnableVertexAttribArray(sh->attrib.normal_id);
+	glVertexAttribPointer(sh->attrib.normal_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
+	glEnableVertexAttribArray(sh->attrib.texcoord_id);
+	glVertexAttribPointer(sh->attrib.texcoord_id, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_TEXCOORD));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(sh->attrib.position_id);
+	glDisableVertexAttribArray(sh->attrib.color_id);
+	glDisableVertexAttribArray(sh->attrib.normal_id);
+	glDisableVertexAttribArray(sh->attrib.texcoord_id);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -373,6 +426,15 @@ void r3_make_color_shader(struct r3_shader *sh)
 		(const char*)shader_color_frag, shader_color_frag_len
 	);
 	r3_set_shader_color_ids(sh);
+}
+
+void r3_make_color_normal_texture_shader(struct r3_shader *sh)
+{
+	sh->program_id = r3_make_program_from_src(
+		(const char*)shader_color_normal_texture_vert, shader_color_normal_texture_vert_len,
+		(const char*)shader_color_normal_texture_frag, shader_color_normal_texture_frag_len
+	);
+	r3_set_shader_color_normal_texture_ids(sh);
 }
 
 void r3_break_mesh(const struct r3_mesh *m)
