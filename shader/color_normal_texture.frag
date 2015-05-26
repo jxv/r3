@@ -25,6 +25,6 @@ void main() {
 
 	sf = step(0.5, sf);
 
-	vec3 color = u_ambient + df * v_color + sf * u_specular;
-	gl_FragColor = vec4(color, 1.0) * 0.5 + texture2D(u_sample, v_texcoord) * 0.5;
+	vec3 color = texture2D(u_sample, v_texcoord).xyz * 0.5 + v_color * 0.5;
+	gl_FragColor = vec4(u_ambient + df * (color * 0.9 + 0.1) + sf * u_specular, 1.0);
 }

@@ -135,25 +135,25 @@ struct r3_mesh {
 };
 
 struct r3_shader {
-	unsigned int program_id;
+	unsigned int program;
 	struct {
-		int position_id;
-		int normal_id;
-		int texcoord_id;
-		int color_id;
+		int position;
+		int normal;
+		int texcoord;
+		int color;
 	} attrib;
 	struct {
-		int mvp_id;
-		int normal_id;
-		int light_position_id;
-		int ambient_id;
-		int diffuse_id;
-		int specular_id;
-		int shininess_id;
-		int sample_id;
-		int coefficients_id;
-		int offset_id;
-		int threshold_id;
+		int mvp;
+		int normal;
+		int light_position;
+		int ambient;
+		int diffuse;
+		int specular;
+		int shininess;
+		int sample;
+		int coefficients;
+		int offset;
+		int threshold;
 	} uniform;
 };
 
@@ -177,9 +177,9 @@ struct r3_spec *r3_create_cuboid_spec();
 
 void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv, m4f mvp,
 	v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess);
-void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id, m4f mvp);
+void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex, m4f mvp);
 void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mvp);
-void r3_render_color_normal_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex_id,
+void r3_render_color_normal_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex,
 	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
 
 void r3_make_cell_shader(struct r3_shader *sh);
@@ -197,5 +197,6 @@ ssize_t r3_indices_tag_sizeof(enum r3_indices_tag tag);
 ssize_t r3_indices_sizeof(const struct r3_indices *indices);
 
 ssize_t r3_offset(enum r3_verts_tag tag, enum r3_vert vert);
+void *r3_offset_ptr(enum r3_verts_tag tag, enum r3_vert vert);
 
 #endif
