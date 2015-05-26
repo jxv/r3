@@ -8,9 +8,11 @@
 #ifdef GCW0
 #define WINDOW_WIDTH 320
 #define WINDOW_HEIGHT 240
+#define COUNT 3
 #else
-#define WINDOW_WIDTH (320*2)
-#define WINDOW_HEIGHT (240*2)
+#define WINDOW_WIDTH (320*3)
+#define WINDOW_HEIGHT (240*3)
+#define COUNT 3
 #endif
 
 struct res {
@@ -27,8 +29,6 @@ struct bo {
 	unsigned int tex;
 	v2i size;
 };
-
-#define COUNT 5
 
 struct bo lf[COUNT];
 struct bo rt[COUNT];
@@ -58,7 +58,7 @@ unsigned int create_fbo_tex(int width, int height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
 	return tex;
 }
@@ -253,18 +253,22 @@ int main(int argc, char *argv[])
 {
 	{ // Init
 		r3_sdl_init("", _v2i(WINDOW_WIDTH, WINDOW_HEIGHT), &ren);
-
-		// defualt screen fb
+		// default screen fb
 		on.fbo = 0;
 		glBindFramebuffer(GL_FRAMEBUFFER, on.fbo);
 		on.size = _v2i(WINDOW_WIDTH, WINDOW_HEIGHT);
 		// rb that will serve as the color attachment for the framebuffer.
 		glGenRenderbuffers(1, &on.color);
 		glBindRenderbuffer(GL_RENDERBUFFER, on.color);
+		// glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB565, on.size.x, on.size.y);
 		// Build the framebuffer.
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, on.color);
 		glBindRenderbuffer(GL_RENDERBUFFER, on.color);
 		on.tex = create_fbo_tex(on.size.x, on.size.y);
+		// check completion
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			return EXIT_FAILURE;
+		}
 
 		// fb for off-screen
 		glGenFramebuffers(1, &off.fbo);
@@ -273,36 +277,43 @@ int main(int argc, char *argv[])
 		// rb for depth and color attachment for fb
 		glGenRenderbuffers(1, &off.color);
 		glBindRenderbuffer(GL_RENDERBUFFER, off.color);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, off.size.x, off.size.y);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB565, off.size.x, off.size.y);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, off.color);
 		glGenRenderbuffers(1, &off.depth);
 		glBindRenderbuffer(GL_RENDERBUFFER, off.depth);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, off.size.x, off.size.y);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, off.color);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, off.depth);
 		off.tex = create_fbo_tex(off.size.x, off.size.y);
 		// check completion
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			return EXIT_SUCCESS;
+			return EXIT_FAILURE;
 		}
 
-		for (int w = on.size.x, h = on.size.y, i = 0; i < COUNT; i++, w >>= 1, h >>= 1) {
+		for (int w = 256, h = 256, i = 0; i < COUNT; i++, w >>= 2, h >>= 2) {
 			glGenFramebuffers(1, &lf[i].fbo);
 			glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
 			lf[i].size = _v2i(w,h);
 			glGenRenderbuffers(1, &lf[i].color);
 			glBindRenderbuffer(GL_RENDERBUFFER, lf[i].color);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, w, h);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB565, w, h);
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, lf[i].color);
 			lf[i].tex = create_fbo_tex(w,h);
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+				return EXIT_FAILURE;
+			}
+
 			
 			glGenFramebuffers(1, &rt[i].fbo);
 			glBindFramebuffer(GL_FRAMEBUFFER, rt[i].fbo);
 			rt[i].size = _v2i(w,h);
 			glGenRenderbuffers(1, &rt[i].color);
 			glBindRenderbuffer(GL_RENDERBUFFER, rt[i].color);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8_OES, w, h);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB565, w, h);
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rt[i].color);
 			rt[i].tex = create_fbo_tex(w,h);
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+				return EXIT_FAILURE;
+			}
 		}
 		
 		//r3_make_normal_shader(&res.shader);
@@ -324,6 +335,7 @@ int main(int argc, char *argv[])
 	}
 	bool done = false;
 	while (!done) { // Main loop
+		const int start_tick = SDL_GetTicks();
 		{ // Input
 			SDL_Event event;
 			while (SDL_PollEvent(&event) && !done) {
@@ -333,7 +345,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		{ // Update
-			angle = fmodf(angle + dt * 2, M_PI * 2);
+			angle = fmodf(angle + dt * 3.5, M_PI * 2);
 			const m4f persp = perspf(45, aspect, 1, 20);
 			const m4f translate = translatef(_v3f(0,0,-7));
 			const m4f rot = rotm4f(angle, _v3f(0.9, 0.5, 0.1));
@@ -344,11 +356,12 @@ int main(int argc, char *argv[])
 			// off screen
 			glBindFramebuffer(GL_FRAMEBUFFER, off.fbo);
 			glViewport(0, 0, off.size.x, off.size.y);
-			glClearColor(1,1,1,1);
+			glClearColor(0,0,0,1);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glDepthFunc(GL_ALWAYS);
-			render_blit(&quad, res.tex);
-			glDepthFunc(GL_LESS);
+
+			//glDepthFunc(GL_ALWAYS);
+			//render_blit(&quad, res.tex);
+			//glDepthFunc(GL_LESS);
 			r3_render_color_normal_texture(&res.mesh, &res.shader, res.tex, mv, mvp, light_pos, ambient, specular, shininess);
 
 			for (int i = 0; i < COUNT; i++) {
@@ -405,14 +418,18 @@ int main(int argc, char *argv[])
 			glEnable(GL_BLEND);
 			glDepthFunc(GL_ALWAYS);
 			for (int i = 0; i < COUNT; i++) {
-				render_blit_alpha(&quad, lf[i].tex, 0.5);
+				render_blit_alpha(&quad, lf[i].tex, 0.6);
 			}
 			glDepthFunc(GL_LESS);			
 			glDisable(GL_BLEND);
 			
 			r3_render(&ren);
 		}
-		SDL_Delay(16);
+		const int end_tick = SDL_GetTicks();
+		const int diff_tick = end_tick - start_tick;
+		if (diff_tick < 24) {
+			SDL_Delay(24 - diff_tick);
+		}
 	}
 	// Clean up
 	r3_break_mesh(&res.mesh);
