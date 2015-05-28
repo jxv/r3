@@ -20,6 +20,14 @@
 #include "../shader/color_normal_texture.vert.h"
 #include "../shader/color_normal_texture.frag.h"
 
+#include "../shader/blit.vert.h"
+#include "../shader/blit.frag.h"
+
+#include "../shader/blit_alpha.frag.h"
+#include "../shader/gaussian.frag.h"
+#include "../shader/gaussian_2d.frag.h"
+#include "../shader/high_pass.frag.h"
+
 void r3_clear(struct r3_ren *ren)
 {
 	glClearColor(ren->clear_color.x, ren->clear_color.y, ren->clear_color.z, 1);
