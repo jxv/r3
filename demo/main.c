@@ -10,8 +10,8 @@
 #define WINDOW_HEIGHT 240
 #define COUNT 3
 #else
-#define WINDOW_WIDTH (320*3)
-#define WINDOW_HEIGHT (240*3)
+#define WINDOW_WIDTH (320)
+#define WINDOW_HEIGHT (240)
 #define COUNT 3
 #endif
 
@@ -184,10 +184,10 @@ void render_blur(const struct r3_mesh *m, unsigned int tex, bool is_width, float
 	glBindTexture(GL_TEXTURE_2D,tex);
 	glUniform1i(blur.uniform.sample, 0);
 	if (is_width) {
-		const float offset = 1.2f / len;
+		const float offset = 1.5f / len;
 		glUniform2f(blur.uniform.offset, offset, 0);
 	} else {
-		const float offset = 1.2f / len;
+		const float offset = 1.5f / len;
 		glUniform2f(blur.uniform.offset, 0, offset);
 	}
 	render_drawable(m, &blur, R3_TEXCOORD);
@@ -237,7 +237,7 @@ void make_high_pass()
 	high_pass.attrib.texcoord = glGetAttribLocation(high_pass.program, "a_texcoord");
 	high_pass.uniform.sample = glGetUniformLocation(high_pass.program, "u_sample");
 	high_pass.uniform.threshold = glGetUniformLocation(high_pass.program, "u_threshold");
-	glUniform1f(high_pass.uniform.threshold, 0.65);
+	glUniform1f(high_pass.uniform.threshold, 0);
 }
 
 void render_high_pass(const struct r3_mesh *m, unsigned int tex)
@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
 			return EXIT_FAILURE;
 		}
 
-		for (int w = 256, h = 256, i = 0; i < COUNT; i++, w >>= 2, h >>= 2) {
+		for (int w = on.size.x, h = on.size.y, i = 0; i < COUNT; i++, w >>= 1, h >>= 1) {
 			glGenFramebuffers(1, &lf[i].fbo);
 			glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
 			lf[i].size = _v2i(w,h);
@@ -364,64 +364,50 @@ int main(int argc, char *argv[])
 			//glDepthFunc(GL_LESS);
 			r3_render_color_normal_texture(&res.mesh, &res.shader, res.tex, mv, mvp, light_pos, ambient, specular, shininess);
 
+			glDepthFunc(GL_ALWAYS);
 			for (int i = 0; i < COUNT; i++) {
 				glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
 				glViewport(0, 0, lf[i].size.x, lf[i].size.y);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				glDepthFunc(GL_ALWAYS);
-				render_blit(&quad, off.tex);
-				glDepthFunc(GL_LESS);
+				render_blit(&quad, i == 0 ? off.tex : lf[i - 1].tex);
 
 				glBindFramebuffer(GL_FRAMEBUFFER, rt[i].fbo);
 				glViewport(0, 0, rt[i].size.x, rt[i].size.y);
-				glDepthFunc(GL_ALWAYS);
-				render_blit(&quad, lf[i].tex);
-				glDepthFunc(GL_LESS);
+				render_high_pass(&quad, lf[i].tex);
 
 				glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
 				glViewport(0, 0, lf[i].size.x, lf[i].size.y);
-				glDepthFunc(GL_ALWAYS);
-				render_high_pass(&quad, rt[i].tex);
-				glDepthFunc(GL_LESS);
+				render_blur(&quad, rt[i].tex, true, WINDOW_WIDTH);
 
 				glBindFramebuffer(GL_FRAMEBUFFER, rt[i].fbo);
 				glViewport(0, 0, rt[i].size.x, rt[i].size.y);
-				glDepthFunc(GL_ALWAYS);
-				render_blur(&quad, lf[i].tex, true, WINDOW_WIDTH);
-				glDepthFunc(GL_LESS);
+				render_blur(&quad, lf[i].tex, false, WINDOW_HEIGHT);
 
 				glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
 				glViewport(0, 0, lf[i].size.x, lf[i].size.y);
-				glDepthFunc(GL_ALWAYS);
-				render_blur(&quad, rt[i].tex, false, WINDOW_HEIGHT);
-				glDepthFunc(GL_LESS);
-
-				glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				glViewport(0, 0, lf[i].size.x, lf[i].size.y);
-				glDepthFunc(GL_ALWAYS);
 				render_blit(&quad, rt[i].tex);
-				glDepthFunc(GL_LESS);
 			}
+			glDepthFunc(GL_LESS);
 			
 			glBindFramebuffer(GL_FRAMEBUFFER, on.fbo);
 			glViewport(0, 0, on.size.x, on.size.y);
-			glClearColor(0,0,0,1);
+			glClearColor(0.2,0.2,0.2,1);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			glDepthFunc(GL_ALWAYS);
-			render_blit(&quad, res.tex);
+			//render_blit(&quad, res.tex);
 			glDepthFunc(GL_LESS);
-			r3_render_color_normal_texture(&res.mesh, &res.shader, res.tex, mv, mvp, light_pos, ambient, specular, shininess);
 
 			glBlendFunc(GL_ONE, GL_ONE);
 			glEnable(GL_BLEND);
 			glDepthFunc(GL_ALWAYS);
 			for (int i = 0; i < COUNT; i++) {
-				render_blit_alpha(&quad, lf[i].tex, 0.6);
+				render_blit_alpha(&quad, lf[i].tex, 1);
 			}
-			glDepthFunc(GL_LESS);			
+			glDepthFunc(GL_LESS);
 			glDisable(GL_BLEND);
+			
+			r3_render_color_normal_texture(&res.mesh, &res.shader, res.tex, mv, mvp, light_pos, ambient, specular, shininess);
 			
 			r3_render(&ren);
 		}
