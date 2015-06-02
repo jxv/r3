@@ -134,27 +134,32 @@ struct r3_mesh {
 	unsigned int num_indices;
 };
 
+struct r3_shader_attrib {
+	int position;
+	int normal;
+	int texcoord;
+	int color;
+};
+
+struct r3_shader_uniform {
+	int mvp;
+	int normal;
+	int light_position;
+	int ambient;
+	int diffuse;
+	int specular;
+	int shininess;
+	int sample;
+	int coefficients;
+	int offset;
+	int threshold;
+	int alpha;
+};
+
 struct r3_shader {
 	unsigned int program;
-	struct {
-		int position;
-		int normal;
-		int texcoord;
-		int color;
-	} attrib;
-	struct {
-		int mvp;
-		int normal;
-		int light_position;
-		int ambient;
-		int diffuse;
-		int specular;
-		int shininess;
-		int sample;
-		int coefficients;
-		int offset;
-		int threshold;
-	} uniform;
+	struct r3_shader_attrib attrib;
+	struct r3_shader_uniform uniform;
 };
 
 void r3_clear(struct r3_ren *ren);
@@ -187,6 +192,10 @@ void r3_make_normal_shader(struct r3_shader *sh);
 void r3_make_texture_shader(struct r3_shader *sh);
 void r3_make_color_shader(struct r3_shader *sh);
 void r3_make_color_normal_texture_shader(struct r3_shader *sh);
+void r3_make_blit_shader(struct r3_shader *sh);
+void r3_make_blit_alpha_shader(struct r3_shader *sh);
+void r3_make_blur_shader(struct r3_shader *sh);
+void r3_make_high_pass_shader(struct r3_shader *sh);
 
 void r3_break_mesh(const struct r3_mesh *m);
 void r3_break_shader(const struct r3_shader *sh);
