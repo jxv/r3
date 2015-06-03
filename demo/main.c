@@ -125,32 +125,13 @@ void render_drawable(const struct r3_mesh *m, const struct r3_shader *sh, int fl
 	}
 }
 
-void make_blit()
-{
-	blit.program = r3_load_program_from_path("res/shader/blit.vert", "res/shader/blit.frag");
-	glUseProgram(blit.program);
-	blit.attrib.position = glGetAttribLocation(blit.program, "a_position");
-	blit.attrib.texcoord = glGetAttribLocation(blit.program, "a_texcoord");
-	blit.uniform.sample = glGetUniformLocation(blit.program, "u_sample");
-}
-
-void make_blit_alpha()
-{
-	blit_alpha.program = r3_load_program_from_path("res/shader/blit.vert", "res/shader/blit_alpha.frag");
-	glUseProgram(blit_alpha.program);
-	blit_alpha.attrib.position = glGetAttribLocation(blit_alpha.program, "a_position");
-	blit_alpha.attrib.texcoord = glGetAttribLocation(blit_alpha.program, "a_texcoord");
-	blit_alpha.uniform.sample = glGetUniformLocation(blit_alpha.program, "u_sample");
-	blit_alpha.uniform.coefficients = glGetUniformLocation(blit_alpha.program, "u_alpha");
-}
-
 void render_blit_alpha(const struct r3_mesh *m, unsigned int tex, float alpha)
 {
 	glUseProgram(blit_alpha.program);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D,tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
 	glUniform1i(blit_alpha.uniform.sample, 0);
-	glUniform1f(blit_alpha.uniform.coefficients, alpha);
+	glUniform1f(blit_alpha.uniform.alpha, alpha);
 	render_drawable(m, &blit_alpha, R3_TEXCOORD);
 }
 
@@ -163,51 +144,35 @@ void render_blit(const struct r3_mesh *m, unsigned int tex)
 	render_drawable(m, &blit, R3_TEXCOORD);
 }
 
-void make_blur()
-{
-	blur.program = r3_load_program_from_path("res/shader/blit.vert", "res/shader/gaussian.frag");
-	glUseProgram(blur.program);
-	blur.attrib.position = glGetAttribLocation(blur.program, "a_position");
-	blur.attrib.texcoord = glGetAttribLocation(blur.program, "a_texcoord");
-	blur.uniform.sample = glGetUniformLocation(blur.program, "u_sample");
-	blur.uniform.coefficients = glGetUniformLocation(blur.program, "u_coefficients");
-	blur.uniform.offset = glGetUniformLocation(blur.program, "u_offset");
-
-	const float kernel[3] = { 5.0f / 16.0f, 6.0f / 16.0f, 5.0f / 16.0f };
-	glUniform1fv(blur.uniform.coefficients, 3, kernel);
-}
-
-void render_blur(const struct r3_mesh *m, unsigned int tex, bool is_width, float len)
+void render_blur_width(const struct r3_mesh *m, unsigned int tex, float width)
 {
 	glUseProgram(blur.program);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,tex);
 	glUniform1i(blur.uniform.sample, 0);
-	if (is_width) {
-		const float offset = 1.5f / len;
-		glUniform2f(blur.uniform.offset, offset, 0);
-	} else {
-		const float offset = 1.5f / len;
-		glUniform2f(blur.uniform.offset, 0, offset);
-	}
+	glUniform2f(blur.uniform.offset, 1.5f / width, 0);
 	render_drawable(m, &blur, R3_TEXCOORD);
 }
 
-void make_light()
+void render_blur_height(const struct r3_mesh *m, unsigned int tex, float height)
 {
-	light.program = r3_load_program_from_path("res/shader/light.vert", "res/shader/light.frag");
-	glUseProgram(light.program);
-	light.attrib.position = glGetAttribLocation(light.program, "a_position");
-	light.attrib.normal = glGetAttribLocation(light.program, "a_normal");
-	light.uniform.mvp = glGetUniformLocation(light.program, "u_mvp");
-	light.uniform.normal = glGetUniformLocation(light.program, "u_normal");
-	light.uniform.light_position = glGetUniformLocation(light.program, "u_light_position");
-	light.uniform.ambient = glGetUniformLocation(light.program, "u_ambient");
-	light.uniform.diffuse = glGetUniformLocation(light.program, "u_diffuse");
-	light.uniform.specular = glGetUniformLocation(light.program, "u_specular");
-	light.uniform.shininess = glGetUniformLocation(light.program, "u_shininess");
+	glUseProgram(blur.program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,tex);
+	glUniform1i(blur.uniform.sample, 0);
+	glUniform2f(blur.uniform.offset, 0, 1.5f / height);
+	render_drawable(m, &blur, R3_TEXCOORD);
 }
 
+void render_high_pass(const struct r3_mesh *m, unsigned int tex)
+{
+	glUseProgram(high_pass.program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,tex);
+	glUniform1i(blit.uniform.sample, 0);
+	render_drawable(m, &high_pass, R3_TEXCOORD);
+}
+/*
 void render_light(const struct r3_mesh *m, m4f mv, m4f mvp)
 {
 	glUseProgram(light.program);
@@ -228,27 +193,7 @@ void render_light(const struct r3_mesh *m, m4f mv, m4f mvp)
 	glDisableVertexAttribArray(light.attrib.position);
 	glDisableVertexAttribArray(light.attrib.normal);
 }
-
-void make_high_pass()
-{
-	high_pass.program = r3_load_program_from_path("res/shader/blit.vert", "res/shader/high_pass.frag");
-	glUseProgram(high_pass.program);
-	high_pass.attrib.position = glGetAttribLocation(high_pass.program, "a_position");
-	high_pass.attrib.texcoord = glGetAttribLocation(high_pass.program, "a_texcoord");
-	high_pass.uniform.sample = glGetUniformLocation(high_pass.program, "u_sample");
-	high_pass.uniform.threshold = glGetUniformLocation(high_pass.program, "u_threshold");
-	glUniform1f(high_pass.uniform.threshold, 0);
-}
-
-void render_high_pass(const struct r3_mesh *m, unsigned int tex)
-{
-	glUseProgram(high_pass.program);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D,tex);
-	glUniform1i(blit.uniform.sample, 0);
-	render_drawable(m, &high_pass, R3_TEXCOORD);
-}
-
+*/
 int main(int argc, char *argv[])
 {
 	{ // Init
@@ -325,11 +270,12 @@ int main(int argc, char *argv[])
 		
 		quad = make_quad();
 
-		make_blit();
-		make_blit_alpha();
-		make_blur();
-		make_light();
-		make_high_pass();
+		r3_make_blit_shader(&blit);
+		r3_make_blit_alpha_shader(&blit_alpha);
+		r3_make_blur_shader(&blur);
+		r3_make_high_pass_shader(&high_pass);
+		glUseProgram(high_pass.program);
+		glUniform1f(high_pass.uniform.threshold, 0.0);
 
 		r3_enable_tests(&ren);
 	}
@@ -347,7 +293,7 @@ int main(int argc, char *argv[])
 		{ // Update
 			angle = fmodf(angle + dt * 3.5, M_PI * 2);
 			const m4f persp = perspf(45, aspect, 1, 20);
-			const m4f translate = translatef(_v3f(0,0,-7));
+			const m4f translate = translatef(_v3f(cosf(angle*2)*1.8,sinf(angle*5),-7));
 			const m4f rot = rotm4f(angle, _v3f(0.9, 0.5, 0.1));
 			mv = addm4f(mulm4f(rot, scalem4f(eyem4f(), _v3f(3, 3, 3))), translate);
 			mvp = mulm4f(persp, mv);
@@ -369,7 +315,7 @@ int main(int argc, char *argv[])
 				glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
 				glViewport(0, 0, lf[i].size.x, lf[i].size.y);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				render_blit(&quad, i == 0 ? off.tex : lf[i - 1].tex);
+				render_blit(&quad, i == 0 ? off.tex : rt[i - 1].tex);
 
 				glBindFramebuffer(GL_FRAMEBUFFER, rt[i].fbo);
 				glViewport(0, 0, rt[i].size.x, rt[i].size.y);
@@ -377,15 +323,11 @@ int main(int argc, char *argv[])
 
 				glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
 				glViewport(0, 0, lf[i].size.x, lf[i].size.y);
-				render_blur(&quad, rt[i].tex, true, WINDOW_WIDTH);
+				render_blur_width(&quad, rt[i].tex, WINDOW_WIDTH);
 
 				glBindFramebuffer(GL_FRAMEBUFFER, rt[i].fbo);
 				glViewport(0, 0, rt[i].size.x, rt[i].size.y);
-				render_blur(&quad, lf[i].tex, false, WINDOW_HEIGHT);
-
-				glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
-				glViewport(0, 0, lf[i].size.x, lf[i].size.y);
-				render_blit(&quad, rt[i].tex);
+				render_blur_height(&quad, lf[i].tex, WINDOW_HEIGHT);
 			}
 			glDepthFunc(GL_LESS);
 			
@@ -394,15 +336,15 @@ int main(int argc, char *argv[])
 			glClearColor(0.2,0.2,0.2,1);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glDepthFunc(GL_ALWAYS);
+			//glDepthFunc(GL_ALWAYS);
 			//render_blit(&quad, res.tex);
-			glDepthFunc(GL_LESS);
+			//glDepthFunc(GL_LESS);
 
 			glBlendFunc(GL_ONE, GL_ONE);
 			glEnable(GL_BLEND);
 			glDepthFunc(GL_ALWAYS);
 			for (int i = 0; i < COUNT; i++) {
-				render_blit_alpha(&quad, lf[i].tex, 1);
+				render_blit_alpha(&quad, rt[i].tex, 1);
 			}
 			glDepthFunc(GL_LESS);
 			glDisable(GL_BLEND);
@@ -423,3 +365,4 @@ int main(int argc, char *argv[])
 	r3_quit(&ren);
 	return EXIT_SUCCESS;
 }
+

@@ -1,8 +1,8 @@
 precision mediump float;
 
 uniform vec3 u_light_position;
-uniform vec3 u_ambient_material;
-uniform vec3 u_specular_material;
+uniform vec3 u_ambient;
+uniform vec3 u_specular;
 uniform sampler2D u_sample;
 uniform float u_shininess;
 
@@ -26,6 +26,6 @@ void main() {
 	
 	sf = step(0.5, sf);
 
-	vec3 color = u_ambient_material + df * v_color + sf * u_specular_material;
+	vec3 color = u_ambient + df * v_color + sf * u_specular;
 	gl_FragColor = vec4(color, 1.0) * 0.8 + texture2D(u_sample, v_texcoord) * 0.2;
 }

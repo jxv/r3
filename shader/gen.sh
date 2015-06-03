@@ -2,10 +2,12 @@
 
 for i in `find shader | grep "\.frag" | grep -v "\.h"`
 do
+	echo "${i} => ${i}.h"
 	xxd -i $i > $i.h
 done
 
 for i in `find shader | grep "\.vert" | grep -v "\.h"`
 do
+	echo "${i} => ${i}.h"
 	xxd -i $i > $i.h
 done

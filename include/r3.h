@@ -196,6 +196,7 @@ void r3_make_blit_shader(struct r3_shader *sh);
 void r3_make_blit_alpha_shader(struct r3_shader *sh);
 void r3_make_blur_shader(struct r3_shader *sh);
 void r3_make_high_pass_shader(struct r3_shader *sh);
+void r3_make_light_shader(struct r3_shader *sh);
 
 void r3_break_mesh(const struct r3_mesh *m);
 void r3_break_shader(const struct r3_shader *sh);
