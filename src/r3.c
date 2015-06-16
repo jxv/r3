@@ -215,6 +215,43 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m)
 	m->verts_tag = spec->verts.tag;
 }
 
+struct r3_mesh r3_make_quad()
+{
+	struct r3_mesh m;
+	const struct r3_pt verts[4] = {
+		(struct r3_pt) {
+			.position = _v3f(-1, 1, 1),
+			.texcoord = _v2f(0, 1)
+		},
+		(struct r3_pt) {
+			.position = _v3f(-1,-1, 1),
+			.texcoord = _v2f(0, 0)
+		},
+		(struct r3_pt) {
+			.position = _v3f( 1, 1, 1),
+			.texcoord = _v2f(1, 1)
+		},
+		(struct r3_pt) {
+			.position = _v3f( 1,-1, 1),
+			.texcoord = _v2f(1, 0)
+		},
+	};
+	const unsigned short int indices[6] = {
+		0, 1, 2,
+		1, 3, 2,
+	};
+	m.num_indices = 6;
+	glGenBuffers(1, &m.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, m.vbo);
+	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(struct r3_pt), verts, GL_STATIC_DRAW);
+	glGenBuffers(1, &m.ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m.ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m.num_indices * sizeof(unsigned short int), indices, GL_STATIC_DRAW);
+	m.verts_tag = R3_VERTS_PT;
+	return m;
+}
+
+
 unsigned int r3_make_fbo_tex(int width, int height)
 {
 	unsigned int tex;
