@@ -215,6 +215,115 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m)
 	m->verts_tag = spec->verts.tag;
 }
 
+unsigned int r3_make_fbo_tex(int width, int height)
+{
+	unsigned int tex;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+	return tex;
+}
+
+
+static void render_drawable(const struct r3_mesh *m, const struct r3_shader *sh, int flags)
+{
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glEnableVertexAttribArray(sh->attrib.position);
+	glVertexAttribPointer(sh->attrib.position, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
+	if (flags == R3_TEXCOORD) {
+		glEnableVertexAttribArray(sh->attrib.texcoord);
+		glVertexAttribPointer(sh->attrib.texcoord, 2, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_TEXCOORD));
+	}
+	if (flags == R3_NORMAL) {
+		glEnableVertexAttribArray(sh->attrib.normal);
+		glVertexAttribPointer(sh->attrib.normal, 3, GL_FLOAT, GL_FALSE,
+			r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, 0);
+	glDisableVertexAttribArray(sh->attrib.position);
+	if (flags == R3_TEXCOORD)
+		glDisableVertexAttribArray(sh->attrib.texcoord);
+	if (flags == R3_NORMAL)
+		glDisableVertexAttribArray(sh->attrib.normal);
+}
+
+void r3_render_blit_alpha(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex, float alpha)
+{
+	glUseProgram(sh->program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glUniform1i(sh->uniform.sample, 0);
+	glUniform1f(sh->uniform.alpha, alpha);
+	render_drawable(m, sh, R3_TEXCOORD);
+}
+
+void r3_render_blit(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex)
+{
+	glUseProgram(sh->program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,tex);
+	glUniform1i(sh->uniform.sample, 0);
+	render_drawable(m, sh, R3_TEXCOORD);
+}
+
+void r3_render_blur_width(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex, float aspect, float width)
+{
+	glUseProgram(sh->program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,tex);
+	glUniform1i(sh->uniform.sample, 0);
+	glUniform2f(sh->uniform.offset, aspect / width, 0);
+	render_drawable(m, sh, R3_TEXCOORD);
+}
+
+void r3_render_blur_height(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex, float aspect, float height)
+{
+	glUseProgram(sh->program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,tex);
+	glUniform1i(sh->uniform.sample, 0);
+	glUniform2f(sh->uniform.offset, 0, aspect / height);
+	render_drawable(m, sh, R3_TEXCOORD);
+}
+
+void r3_render_high_pass(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex)
+{
+	glUseProgram(sh->program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,tex);
+	glUniform1i(sh->uniform.sample, 0);
+	render_drawable(m, sh, R3_TEXCOORD);
+}
+
+/*
+void render_light(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv, m4f mvp)
+{
+	glUseProgram(sh->program);
+	glUniformMatrix4fv(sh->uniform.mvp, 1, GL_FALSE, mvp.val);
+	glUniformMatrix3fv(sh->uniform.normal, 1, GL_FALSE, m3m4f(mv).val);
+	glUniform3fv(sh->uniform.light_position, 1, light_pos.val);
+	glUniform3fv(sh->uniform.ambient, 1, ambient.val);
+	glUniform3fv(sh->uniform.diffuse, 1, diffuse.val);
+	glUniform3fv(sh->uniform.specular, 1, specular.val);
+	glUniform1f(sh->uniform.shininess, shininess);
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glEnableVertexAttribArray(sh->attrib.position);
+	glEnableVertexAttribArray(sh->attrib.normal);
+	glVertexAttribPointer(sh->attrib.position, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
+	glVertexAttribPointer(sh->attrib.normal, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+	glDisableVertexAttribArray(sh->attrib.position);
+	glDisableVertexAttribArray(sh->attrib.normal);
+}
+*/
+
 void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv, m4f mvp,
 		v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess)
 {

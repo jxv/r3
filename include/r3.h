@@ -176,17 +176,23 @@ unsigned int r3_load_program_from_path(const char *vert_path, const char *frag_p
 
 void r3_viewport(const struct r3_ren *ren);
 void r3_enable_tests(const struct r3_ren *ren);
+unsigned int r3_make_fbo_tex(int width, int height);
 void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m);
 
 struct r3_spec *r3_create_cuboid_spec();
 
+void r3_render_blit_alpha(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex, float alpha);
+void r3_render_blit(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex);
+void r3_render_blur_width(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex, float aspect, float width);
+void r3_render_blur_height(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex, float aspect, float height);
+void r3_render_high_pass(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex);
 void r3_render_normal(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv, m4f mvp,
 	v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess);
 void r3_render_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex, m4f mvp);
 void r3_render_color(const struct r3_mesh *m, const struct r3_shader *sh, m4f mvp);
 void r3_render_color_normal_texture(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex,
 	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
-
+	
 void r3_make_cell_shader(struct r3_shader *sh);
 void r3_make_normal_shader(struct r3_shader *sh);
 void r3_make_texture_shader(struct r3_shader *sh);
