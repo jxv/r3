@@ -245,8 +245,7 @@ void r3_break_shader(const r3_shader_t *sh);
 ssize_t r3_verts_tag_sizeof(r3_verts_tag_t tag);
 ssize_t r3_verts_sizeof(const r3_verts_t *verts);
 ssize_t r3_indices_tag_sizeof(r3_indices_tag_t tag);
-ssize_t r3_indices_sizeof(const r3_indices_t
-*indices);
+ssize_t r3_indices_sizeof(const r3_indices_t *indices);
 
 ssize_t r3_offset(r3_verts_tag_t tag, r3_vert_t vert);
 void *r3_offset_ptr(r3_verts_tag_t tag, r3_vert_t vert);

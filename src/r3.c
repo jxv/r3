@@ -31,6 +31,59 @@
 #include "../shader/light.vert.h"
 #include "../shader/light.frag.h"
 
+struct {
+	unsigned int program;
+	int a_position;
+	int a_texcoord;
+	int u_sample;
+} blit;
+
+struct {
+	unsigned int program;
+	int a_position;
+	int a_texcoord;
+	int u_sample;
+	int u_alpha;
+} blit_blend;
+
+struct {
+	unsigned int program;
+	int a_position;
+	int a_texcoord;
+	int u_sample;
+	int u_alpha;
+} blit_alpha;
+
+struct {
+	unsigned int program;
+	int a_position;
+	int a_texcoord;
+	int u_sample;
+	int u_coefficients;
+	int u_offset;
+} blur;
+
+struct {
+	unsigned int program;
+	int a_position;
+	int a_texcoord;
+	int u_sample;
+	int u_threshold;
+} high_pass;
+
+struct {
+	unsigned int program;
+	int a_position;
+	int a_normal;
+	int u_mvp;
+	int u_normal;
+	int u_light_position;
+	int u_ambient;
+	int u_diffuse;
+	int u_specular;
+	int u_shininess;
+} light;
+
 void r3_clear(struct r3_ren *ren)
 {
 	glClearColor(ren->clear_color.x, ren->clear_color.y, ren->clear_color.z, 1);
