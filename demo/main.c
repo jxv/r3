@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 				return EXIT_FAILURE;
 			}
 		}
-		
+
 		//r3_make_normal_shader(&res.shader);
 		r3_make_color_normal_texture_shader(&res.shader);
 		struct r3_spec *spec = r3_create_cuboid_spec();

@@ -196,11 +196,14 @@ struct r3_shader {
 
 typedef struct r3_shader r3_shader_t;
 
-void r3_clear(r3_ren_t *ren);
-void r3_render(r3_ren_t *ren);
-void r3_quit(r3_ren_t *ren);
+// NEW API
 
-void r3_load_shaders();
+bool r3_init(const char *title, v2i dim);
+void r3_clear();
+void r3_render();
+void r3_quit();
+
+// OLD API
 
 unsigned int r3_load_tga_texture(const char *path);
 char* r3_load_tga(const char *fileName, int *width, int *height);
@@ -230,17 +233,8 @@ void r3_render_texture(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int t
 void r3_render_color(const r3_mesh_t *m, const r3_shader_t *sh, m4f mvp);
 void r3_render_color_normal_texture(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex,
 	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
-	
-void r3_make_cell_shader(r3_shader_t *sh);
-void r3_make_normal_shader(r3_shader_t *sh);
-void r3_make_texture_shader(r3_shader_t *sh);
-void r3_make_color_shader(r3_shader_t *sh);
-void r3_make_color_normal_texture_shader(r3_shader_t *sh);
-void r3_make_blit_shader(r3_shader_t *sh);
-void r3_make_blit_alpha_shader(r3_shader_t *sh);
-void r3_make_blur_shader(r3_shader_t *sh);
-void r3_make_high_pass_shader(r3_shader_t *sh);
-void r3_make_light_shader(r3_shader_t *sh);
+
+void r3_make_shaders();
 
 void r3_break_mesh(const r3_mesh_t *m);
 void r3_break_shader(const r3_shader_t *sh);

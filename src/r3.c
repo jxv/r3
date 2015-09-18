@@ -1,3 +1,5 @@
+/* Beware! Rampant macro usage! */
+
 #include "r3.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,142 +7,378 @@
 #include <assert.h>
 #include <GLES2/gl2.h>
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengles2.h>
+
+static SDL_Window *window;
+static SDL_GLContext context;
+
+static bool r3_sdl_init_video()
+{
+	if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
+		fprintf(stderr, "Couldn't initialize ren driver: %s\n", SDL_GetError());
+		return false;
+        }
+	return true;
+}
+
+static void r3_sdl_set_gl_attributes()
+{
+        SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
+        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
+        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+        SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 0);
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 0);
+        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+        SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+        SDL_GL_SetAttribute(SDL_GL_ACCUM_RED_SIZE, 0);
+        SDL_GL_SetAttribute(SDL_GL_ACCUM_GREEN_SIZE, 0);
+        SDL_GL_SetAttribute(SDL_GL_ACCUM_BLUE_SIZE, 0);
+        SDL_GL_SetAttribute(SDL_GL_ACCUM_ALPHA_SIZE, 0);
+        SDL_GL_SetAttribute(SDL_GL_STEREO, 0);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
+        SDL_GL_SetAttribute(SDL_GL_RETAINED_BACKING, 1);;
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        // SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+        SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+}
+
+static SDL_Window *r3_sdl_create_window(const char *title, int width, int height)
+{
+	return SDL_CreateWindow(
+		title,
+		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		width, height,
+		SDL_WINDOW_OPENGL
+	);
+}
+
+static bool r3_sdl_create_gl_context()
+{
+	context = SDL_GL_CreateContext(window);
+	if (context) {
+	  SDL_Log("SDL_GL_CreateContext(): %s\n", SDL_GetError());
+	  return false;
+	}
+	SDL_GL_SetSwapInterval(1); // VSYNC
+	int status = SDL_GL_MakeCurrent(window, context);
+	if (status) {
+		SDL_Log("SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
+		return false;
+	}
+	return true;
+}
+
+void r3_render()
+{
+  SDL_GL_SwapWindow(window);
+}
+
+bool r3_init(const char *title, v2i dim)
+{
+  if (!r3_sdl_init_video()) return false;
+  r3_sdl_set_gl_attributes();
+  if (!(window = r3_sdl_create_window(title, dim.x, dim.y))) return false;
+  if (!r3_sdl_create_gl_context()) {
+    SDL_DestroyWindow(window);
+    return false;
+  }
+  return true;
+}
+
+void r3_quit()
+{
+  SDL_QuitSubSystem(SDL_INIT_VIDEO);
+  SDL_DestroyWindow(window);
+}
+
+#define SETUP_PROGRAM(base) \
+	const char *vsh = (const char *)shader_##base##_vert; \
+	const int vlen = shader_normal_vert_len; \
+	const char *fsh = (const char *)shader_##base##_frag; \
+	const int  flen = shader_##base##_frag_len; \
+  sh_##base.program = r3_make_program_from_src(vsh, vlen, fsh, flen); \
+  glUseProgram(sh_##base.program);
+
+#define ATTRIB_LOC(base, loc) \
+  sh_##base.loc = glGetAttribLocation(sh_##base.program, #loc);
+
+#define UNIFORM_LOC(base, loc) \
+  sh_##base.loc = glGetUniformLocation(sh_##base.program, #loc);
+
 #include "../shader/normal.vert.h"
 #include "../shader/normal.frag.h"
+
+struct {
+  GLuint program;
+  GLint a_position, a_normal;
+  GLint u_mvp;
+  GLint u_normal;
+  GLint u_light_position;
+  GLint u_ambient;
+  GLint u_diffuse;
+  GLint u_specular;
+  GLint u_shininess;
+  GLint u_sample;
+} sh_normal;
+
+void r3_make_normal_shader()
+{
+  SETUP_PROGRAM(normal)
+  ATTRIB_LOC(normal, a_position)
+  ATTRIB_LOC(normal, a_normal)
+  UNIFORM_LOC(normal, u_mvp)
+  UNIFORM_LOC(normal, u_normal)
+  UNIFORM_LOC(normal, u_light_position)
+  UNIFORM_LOC(normal, u_ambient)
+  UNIFORM_LOC(normal, u_diffuse)
+  UNIFORM_LOC(normal, u_specular)
+  UNIFORM_LOC(normal, u_shininess)
+  UNIFORM_LOC(normal, u_sample)
+}
 
 #include "../shader/cell.vert.h"
 #include "../shader/cell.frag.h"
 
+struct {
+  GLuint program;
+  GLint a_position;
+  GLint a_normal;
+  GLint u_mvp;
+  GLint u_normal;
+  GLint u_light_position;
+  GLint u_ambient;
+  GLint u_diffuse;
+  GLint u_specular;
+  GLint u_shininess;
+  GLint u_sample;
+} sh_cell;
+
+void r3_make_cell_shader()
+{
+  SETUP_PROGRAM(cell)
+  ATTRIB_LOC(cell, a_position)
+  ATTRIB_LOC(cell, a_normal)
+  UNIFORM_LOC(cell, u_mvp)
+  UNIFORM_LOC(cell, u_normal)
+  UNIFORM_LOC(cell, u_light_position)
+  UNIFORM_LOC(cell, u_ambient)
+  UNIFORM_LOC(cell, u_diffuse)
+  UNIFORM_LOC(cell, u_specular)
+  UNIFORM_LOC(cell, u_shininess)
+  UNIFORM_LOC(cell, u_sample)
+}
+
 #include "../shader/color.vert.h"
 #include "../shader/color.frag.h"
+
+struct {
+	GLuint program;
+	GLint a_position;
+	GLint a_color;
+	GLint u_mvp;
+} sh_color;
+
+void r3_make_color_shader()
+{
+  SETUP_PROGRAM(color)
+  ATTRIB_LOC(color, a_position)
+  ATTRIB_LOC(color, a_color)
+  UNIFORM_LOC(color, u_mvp)
+}
 
 #include "../shader/texture.vert.h"
 #include "../shader/texture.frag.h"
 
+struct {
+  GLuint program;
+  GLint a_position;
+  GLint a_texcoord;
+  GLint u_mvp;
+  GLint u_sample;
+} sh_texture;
+
+void r3_make_texture_shader()
+{
+  SETUP_PROGRAM(texture)
+  ATTRIB_LOC(texture, a_position)
+  ATTRIB_LOC(texture, a_texcoord)
+  UNIFORM_LOC(texture, u_mvp)
+  UNIFORM_LOC(texture, u_sample)
+}
+
 #include "../shader/color_normal_texture.vert.h"
 #include "../shader/color_normal_texture.frag.h"
+
+struct {
+	GLuint program;
+	GLint a_position;
+	GLint a_normal;
+	GLint a_color;
+	GLint a_texcoord;
+	GLint u_mvp;
+	GLint u_normal;
+	GLint u_light_position;
+	GLint u_ambient;
+	GLint u_specular;
+	GLint u_shininess;
+	GLint u_sample;
+} sh_color_normal_texture;
+
+void r3_make_color_normal_texture_shader()
+{
+  SETUP_PROGRAM(color_normal_texture)
+  ATTRIB_LOC(color_normal_texture, a_position)
+  ATTRIB_LOC(color_normal_texture, a_normal)
+  ATTRIB_LOC(color_normal_texture, a_color)
+  ATTRIB_LOC(color_normal_texture, a_texcoord)
+  UNIFORM_LOC(color_normal_texture, u_mvp)
+  UNIFORM_LOC(color_normal_texture, u_normal)
+  UNIFORM_LOC(color_normal_texture, u_light_position)
+  UNIFORM_LOC(color_normal_texture, u_ambient)
+  UNIFORM_LOC(color_normal_texture, u_specular)
+  UNIFORM_LOC(color_normal_texture, u_shininess)
+  UNIFORM_LOC(color_normal_texture, u_sample)
+}
 
 #include "../shader/blit.vert.h"
 #include "../shader/blit.frag.h"
 
+struct {
+	GLuint program;
+	GLint a_position;
+	GLint a_texcoord;
+	GLint u_sample;
+} sh_blit;
+
+void r3_make_blit_shader()
+{
+  SETUP_PROGRAM(blit)
+  ATTRIB_LOC(blit, a_position)
+  ATTRIB_LOC(blit, a_texcoord)
+  UNIFORM_LOC(blit, u_sample)
+}
+
+#include "../shader/blit_alpha.vert.h"
 #include "../shader/blit_alpha.frag.h"
+
+struct {
+	GLuint program;
+	GLint a_position;
+	GLint a_texcoord;
+	GLint u_sample;
+	GLint u_alpha;
+} sh_blit_alpha;
+
+void r3_make_blit_alpha_shader()
+{
+  SETUP_PROGRAM(blit_alpha)
+  ATTRIB_LOC(blit_alpha, a_position)
+  ATTRIB_LOC(blit_alpha, a_texcoord)
+  UNIFORM_LOC(blit_alpha, u_sample)
+  UNIFORM_LOC(blit_alpha, u_alpha)
+}
+
+#include "../shader/gaussian.vert.h"
 #include "../shader/gaussian.frag.h"
+
+struct {
+	GLuint program;
+	GLint a_position;
+	GLint a_texcoord;
+	GLint u_sample;
+	GLint u_coefficients;
+	GLint u_offset;
+} sh_gaussian;
+
+void r3_make_gaussian_shader()
+{
+  SETUP_PROGRAM(gaussian)
+  ATTRIB_LOC(gaussian, a_position)
+  ATTRIB_LOC(gaussian, a_texcoord)
+  UNIFORM_LOC(gaussian, u_sample)
+  UNIFORM_LOC(gaussian, u_coefficients)
+  UNIFORM_LOC(gaussian, u_offset)
+}
+
+/*
 #include "../shader/gaussian_2d.frag.h"
+
+struct {
+	GLuint program;
+	GLint a_position;
+	GLint a_texcoord;
+	GLint u_sample;
+	GLint u_coefficients;
+	GLint u_offset;
+} sh_gaussian_2d;
+*/
+
+#include "../shader/high_pass.vert.h"
 #include "../shader/high_pass.frag.h"
+
+struct {
+	GLuint program;
+	GLint a_position;
+	GLint a_texcoord;
+	GLint u_sample;
+	GLint u_threshold;
+} sh_high_pass;
+
+void r3_make_high_pass_shader()
+{
+  SETUP_PROGRAM(high_pass)
+  ATTRIB_LOC(high_pass, a_position)
+  ATTRIB_LOC(high_pass, a_texcoord)
+  UNIFORM_LOC(high_pass, u_sample)
+  UNIFORM_LOC(high_pass, u_threshold)
+}
 
 #include "../shader/light.vert.h"
 #include "../shader/light.frag.h"
 
 struct {
-	unsigned int program;
-	int a_position;
-	int a_normal;
-	int u_mvp;
-	int u_normal;
-	int u_light_position;
-	int u_ambient;
-	int u_diffuse;
-	int u_specular;
-	int u_shininess;
-	int u_sample;
-} cell;
+	GLuint program;
+	GLint a_position;
+	GLint a_normal;
+	GLint u_mvp;
+	GLint u_normal;
+	GLint u_light_position;
+	GLint u_ambient;
+	GLint u_diffuse;
+	GLint u_specular;
+	GLint u_shininess;
+} sh_light;
 
-struct {
-	unsigned int program;
-	int a_position;
-	int a_normal;
-	int u_mvp;
-	int u_normal;
-	int u_light_position;
-	int u_ambient;
-	int u_diffuse;
-	int u_specular;
-	int u_shininess;
-	int u_sample;
-} normal;
+void r3_make_light_shader()
+{
+  SETUP_PROGRAM(light)
+  ATTRIB_LOC(light, a_position)
+  ATTRIB_LOC(light, a_normal)
+  UNIFORM_LOC(light, u_normal)
+  UNIFORM_LOC(light, u_light_position)
+  UNIFORM_LOC(light, u_ambient)
+  UNIFORM_LOC(light, u_diffuse)
+  UNIFORM_LOC(light, u_specular)
+  UNIFORM_LOC(light, u_shininess)
+}
 
-struct {
-	unsigned int program;
-	int a_position;
-	int a_texcoord;
-	int u_mvp;
-	int u_sample;
-} texture;
-
-struct {
-	unsigned int program;
-	int a_position;
-	int a_color;
-	int u_mvp;
-} color;
-
-struct {
-	unsigned int program;
-	int a_position;
-	int a_normal;
-	int a_color;
-	int a_texcoord;
-	int u_mvp;
-	int u_normal;
-	int u_light_position;
-	int u_ambient;
-	int u_specular;
-	int u_shininess;
-	int u_sample;
-} color_normal_texture;
-
-struct {
-	unsigned int program;
-	int a_position;
-	int a_texcoord;
-	int u_sample;
-} blit;
-
-struct {
-	unsigned int program;
-	int a_position;
-	int a_texcoord;
-	int u_sample;
-	int u_alpha;
-} blit_blend;
-
-struct {
-	unsigned int program;
-	int a_position;
-	int a_texcoord;
-	int u_sample;
-	int u_alpha;
-} blit_alpha;
-
-struct {
-	unsigned int program;
-	int a_position;
-	int a_texcoord;
-	int u_sample;
-	int u_coefficients;
-	int u_offset;
-} blur;
-
-struct {
-	unsigned int program;
-	int a_position;
-	int a_texcoord;
-	int u_sample;
-	int u_threshold;
-} high_pass;
-
-struct {
-	unsigned int program;
-	int a_position;
-	int a_normal;
-	int u_mvp;
-	int u_normal;
-	int u_light_position;
-	int u_ambient;
-	int u_diffuse;
-	int u_specular;
-	int u_shininess;
-} light;
+void r3_load_shaders()
+{
+  r3_make_normal_shader();
+  r3_make_cell_shader();
+  r3_make_texture_shader();
+  r3_make_color_normal_texture_shader();
+  r3_make_blit_shader();
+  r3_make_blit_alpha_shader();
+  r3_make_gaussian_shader();
+  r3_make_high_pass_shader();
+  r3_make_light_shader();
+}
 
 void r3_clear(struct r3_ren *ren)
 {
@@ -148,10 +386,10 @@ void r3_clear(struct r3_ren *ren)
 	glClear(ren->clear_bits);
 }
 
-void r3_render(struct r3_ren *ren)
-{
-	ren->render(ren);
-}
+//void r3_render(struct r3_ren *ren)
+//{
+// ren->render(ren);
+//}
 
 void r3_viewport(const struct r3_ren *ren)
 {
@@ -164,107 +402,10 @@ void  r3_enable_tests(const struct r3_ren *ren)
 	glEnable(GL_DEPTH_TEST);
 }
 
-void r3_quit(struct r3_ren *ren)
-{
-	ren->quit(ren);
-}
-
-void r3_load_cell_shader()
-{	
-	// cell
-	{
-		// Make from source
-		cell.program = r3_make_program_from_src_unsigned(
-			shader_cell_vert,
-			shader_cell_vert_len,
-			shader_cell_frag,
-			shader_cell_frag_len
-		);
-		// Program
-		glUseProgram(cell.program);
-		// Attrib
-		cell.a_position = glGetAttribLocation(cell.program, "a_position");
-		cell.a_normal = glGetAttribLocation(cell.program, "a_normal");
-		// Uniform
-		cell.u_mvp = glGetUniformLocation(cell.program, "u_mvp");
-		cell.u_normal = glGetUniformLocation(cell.program, "u_normal");
-		cell.u_light_position = glGetUniformLocation(cell.program, "u_light_position");
-		cell.u_ambient = glGetUniformLocation(cell.program, "u_ambient");
-		cell.u_diffuse = glGetUniformLocation(cell.program, "u_diffuse");
-		cell.u_specular = glGetUniformLocation(cell.program, "u_specular");
-		cell.u_shininess = glGetUniformLocation(cell.program, "u_shininess");
-		cell.u_sample = glGetUniformLocation(cell.program, "u_sample");
-	}
-	// normal
-	{
-		// Make from source
-		normal.program = r3_make_program_from_src_unsigned(
-			shader_normal_vert,
-			shader_normal_vert_len,
-			shader_normal_frag,
-			shader_normal_frag_len
-		);
-		// Program
-		glUseProgram(normal.program);
-		// Attrib
-		normal.a_position = glGetAttribLocation(normal.program, "a_position");
-		normal.a_normal = glGetAttribLocation(normal.program, "a_normal");
-		// Uniform
-		normal.u_mvp = glGetUniformLocation(normal.program, "u_mvp");
-		normal.u_normal = glGetUniformLocation(normal.program, "u_normal");
-		normal.u_light_position = glGetUniformLocation(normal.program, "u_light_position");
-		normal.u_ambient = glGetUniformLocation(normal.program, "u_ambient");
-		normal.u_diffuse = glGetUniformLocation(normal.program, "u_diffuse");
-		normal.u_specular = glGetUniformLocation(normal.program, "u_specular");
-		normal.u_shininess = glGetUniformLocation(normal.program, "u_shininess");
-		normal.u_sample = glGetUniformLocation(normal.program, "u_sample");
-	}
-	// texture
-	{
-		// Make from source
-		texture.program = r3_make_program_from_src_unsigned(
-			shader_texture_vert,
-			shader_texture_vert_len,
-			shader_texture_frag,
-			shader_texture_frag_len
-		);
-		// Program
-		glUseProgram(texture.program);
-		// Attrib
-		texture.a_position = glGetAttribLocation(texture.program, "a_position");
-		texture.a_texcoord = glGetAttribLocation(texture.program, "a_texcoord");
-		// Uniform
-		texture.u_mvp = glGetUniformLocation(texture.program, "u_mvp");
-		texture.u_sample = glGetUniformLocation(texture.program, "u_sample");
-	}
-	// color
-	{
-		// Make from source
-		color.program = r3_make_program_from_src_unsigned(
-			shader_color_vert,
-			shader_color_vert_len,
-			shader_color_frag,
-			shader_color_frag_len
-		);
-		// Program
-		glUseProgram(color.program);
-		// Attrib
-		color.a_position = glGetAttribLocation(color.program, "a_position");
-		color.a_color = glGetAttribLocation(color.program, "a_color");
-		// Uniform
-		color.u_mvp = glGetUniformLocation(color.program, "u_mvp");
-	}
-
-}
-
-void r3_load_shaders()
-{
-	static bool loaded = false;
-	if (loaded)
-		return;
-	r3_load_cell_shader();
-	loaded = true;
-}
+//void r3_quit(struct r3_ren *ren)
+//{
+//	ren->quit(ren);
+//}
 
 char *r3_load_file(const char *path)
 {
@@ -315,17 +456,17 @@ char* r3_load_tga(const char *fileName, int *width, int *height)
 	return buf;
 }
 
-unsigned int r3_make_shader(const char *src, GLenum type, int src_len)
+GLuint r3_make_shader(const char *src, GLenum type, int src_len)
 {
-	unsigned int shader = glCreateShader(type);
+	GLuint shader = glCreateShader(type);
 	glShaderSource(shader, 1, &src, src_len == 0 ? NULL : &src_len);
 	glCompileShader(shader);
-	int status;
+	GLint status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE) {
-		int len;
+		GLint len;
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
-		char *info = calloc(len, sizeof(GLchar));
+		GLchar *info = calloc(len, sizeof(GLchar));
 		glGetShaderInfoLog(shader, len, NULL, info);
 		fprintf(stderr, "glCompileShader failed:\n%s\n", info);
 		free(info);
@@ -333,27 +474,27 @@ unsigned int r3_make_shader(const char *src, GLenum type, int src_len)
 	return shader;
 }
 
-unsigned int r3_load_shader(const char *path, GLenum type)
+GLuint r3_load_shader(const char *path, GLenum type)
 {
 	char *data = r3_load_file(path);
 	assert(data != NULL);
-	unsigned int result = r3_make_shader(data, type, 0);
+	GLuint result = r3_make_shader(data, type, 0);
 	free(data);
 	return result;
 } 
 
-unsigned int r3_make_program(unsigned int vert_shader, unsigned int frag_shader)
+GLuint r3_make_program(GLuint vert_shader, GLuint frag_shader)
 {
-	unsigned int program = glCreateProgram();
+	GLuint program = glCreateProgram();
 	glAttachShader(program, vert_shader);
 	glAttachShader(program, frag_shader);
 	glLinkProgram(program);
-	int status;
+	GLint status;
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
 	if (status == false) {
 		int len;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
-		char *info = calloc(len, sizeof(char));
+		GLchar *info = calloc(len, sizeof(GLchar));
 		glGetProgramInfoLog(program, len, NULL, info);
 		fprintf(stderr, "glLinkProgram failed: %s\n", info);
 		free(info);
@@ -365,10 +506,10 @@ unsigned int r3_make_program(unsigned int vert_shader, unsigned int frag_shader)
 	return program;
 }
 
-unsigned int r3_make_program_from_src(const char *vsh, int vsh_len, const char *fsh, int fsh_len)
+GLuint r3_make_program_from_src(const char *vsh, int vsh_len, const char *fsh, int fsh_len)
 {
-	const unsigned int vert = r3_make_shader(vsh, GL_VERTEX_SHADER, vsh_len);
-	const unsigned int frag = r3_make_shader(fsh, GL_FRAGMENT_SHADER, fsh_len);
+	const GLuint vert = r3_make_shader(vsh, GL_VERTEX_SHADER, vsh_len);
+	const GLuint frag = r3_make_shader(fsh, GL_FRAGMENT_SHADER, fsh_len);
 	return r3_make_program(vert, frag);
 }
 
@@ -501,6 +642,25 @@ static void render_drawable(const struct r3_mesh *m, const struct r3_shader *sh,
 		glDisableVertexAttribArray(sh->attrib.texcoord);
 	if (flags == R3_NORMAL)
 		glDisableVertexAttribArray(sh->attrib.normal);
+}
+
+void r3_blit_alpha_render(const struct r3_mesh *m, unsigned int tex, float alpha)
+{
+  glUseProgram(sh_blit_alpha.program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glUniform1i(sh_blit_alpha.u_sample, 0);
+	glUniform1f(sh_blit_alpha.u_alpha, alpha);
+
+  glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glEnableVertexAttribArray(sh_blit_alpha.a_position);
+
+	glVertexAttribPointer(sh_blit_alpha.a_position, 3, GL_FLOAT, GL_FALSE,
+    r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
+
+  glEnableVertexAttribArray(sh_blit_alpha.a_texcoord);
+	glVertexAttribPointer(sh_blit_alpha.a_texcoord, 2, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(m->verts_tag),
+    (void*)r3_offset(m->verts_tag, R3_TEXCOORD));
 }
 
 void r3_render_blit_alpha(const struct r3_mesh *m, const struct r3_shader *sh, unsigned int tex, float alpha)
@@ -702,150 +862,8 @@ unsigned int r3_load_tga_texture(const char *path)
 	return 0;
 }
 
-void r3_make_cell_shader(struct r3_shader *sh)
-{
-	// Make from source
-	const char *vsh = (const char *)shader_cell_vert;
-	const int vlen = shader_cell_vert_len; 
-	const char *fsh = (const char *)shader_cell_frag;
-	const int flen = shader_cell_frag_len; 
-	const unsigned int p = r3_make_program_from_src(vsh, vlen, fsh, flen);
-	// Program
-	sh->program = p;
-	glUseProgram(p);
-	// Attrib
-	struct r3_shader_attrib *a = &sh->attrib;
-	a->position = glGetAttribLocation(p, "a_position");
-	a->normal = glGetAttribLocation(p, "a_normal");
-	// Uniform
-	struct r3_shader_uniform *u = &sh->uniform;
-	u->mvp = glGetUniformLocation(p, "u_mvp");
-	u->normal = glGetUniformLocation(p, "u_normal");
-	u->light_position = glGetUniformLocation(p, "u_light_position");
-	u->ambient = glGetUniformLocation(p, "u_ambient");
-	u->diffuse = glGetUniformLocation(p, "u_diffuse");
-	u->specular = glGetUniformLocation(p, "u_specular");
-	u->shininess = glGetUniformLocation(p, "u_shininess");
-	u->sample = glGetUniformLocation(p, "u_sample");
-}
-
-void r3_make_normal_shader(struct r3_shader *sh)
-{
-	// Make from source
-	const char *vsh = (const char *)shader_normal_vert;
-	const int vlen = shader_normal_vert_len; 
-	const char *fsh = (const char *)shader_normal_frag;
-	const int flen = shader_normal_frag_len; 
-	const unsigned int p = r3_make_program_from_src(vsh, vlen, fsh, flen);
-	// Program
-	sh->program = p;
-	glUseProgram(p);
-	// Attrib
-	struct r3_shader_attrib *a = &sh->attrib;
-	a->position = glGetAttribLocation(sh->program, "a_position");
-	a->normal = glGetAttribLocation(sh->program, "a_normal");
-	// Uniform
-	struct r3_shader_uniform *u= &sh->uniform;
-	u->mvp = glGetUniformLocation(p, "u_mvp");
-	u->normal = glGetUniformLocation(p, "u_normal");
-	u->light_position = glGetUniformLocation(p, "u_light_position");
-	u->ambient = glGetUniformLocation(p, "u_ambient");
-	u->diffuse = glGetUniformLocation(p, "u_diffuse");
-	u->specular = glGetUniformLocation(p, "u_specular");
-	u->shininess = glGetUniformLocation(p, "u_shininess");
-	u->sample = glGetUniformLocation(p, "u_sample");
-}
-
-void r3_make_texture_shader(struct r3_shader *sh)
-{
-	// Make from source
-	const char *vsh = (const char *)shader_texture_vert;
-	const int vlen = shader_texture_vert_len; 
-	const char *fsh = (const char *)shader_texture_frag;
-	const int flen = shader_texture_frag_len; 
-	const unsigned int p = r3_make_program_from_src(vsh, vlen, fsh, flen);
-	// Program
-	sh->program = p;
-	glUseProgram(p);
-	// Attrib
-	struct r3_shader_attrib *a = &sh->attrib;
-	a->position = glGetAttribLocation(p, "a_position");
-	a->texcoord = glGetAttribLocation(p, "a_texcoord");
-	// Uniform
-	struct r3_shader_uniform *u = &sh->uniform;
-	u->mvp = glGetUniformLocation(p, "u_mvp");
-	u->sample = glGetUniformLocation(p, "u_sample");
-}
-
-void r3_make_color_shader(struct r3_shader *sh)
-{
-	// Make from source
-	const char *vsh = (const char *)shader_color_vert;
-	const int vlen = shader_color_vert_len; 
-	const char *fsh = (const char *)shader_color_frag;
-	const int flen = shader_color_frag_len; 
-	const unsigned int p = r3_make_program_from_src(vsh, vlen, fsh, flen);
-	// Program
-	sh->program = p;
-	glUseProgram(p);
-	// Attrib
-	struct r3_shader_attrib *a = &sh->attrib;
-	a->position = glGetAttribLocation(p, "a_position");
-	a->color = glGetAttribLocation(p, "a_color");
-	// Uniform
-	struct r3_shader_uniform *u = &sh->uniform;
-	u->mvp = glGetUniformLocation(p, "u_mvp");
-}
-
-void r3_make_color_normal_texture_shader(struct r3_shader *sh)
-{
-	// Make from source
-	const char *vsh = (const char *)shader_color_normal_texture_vert;
-	const int vlen = shader_color_normal_texture_vert_len; 
-	const char *fsh = (const char *)shader_color_normal_texture_frag;
-	const int flen = shader_color_normal_texture_frag_len; 
-	const unsigned int p = r3_make_program_from_src(vsh, vlen, fsh, flen);
-	// Program
-	sh->program = p;
-	glUseProgram(p);
-	// Attrib
-	struct r3_shader_attrib *a = &sh->attrib;
-	a->position = glGetAttribLocation(p, "a_position");
-	a->normal = glGetAttribLocation(p, "a_normal");
-	a->color = glGetAttribLocation(p, "a_color");
-	a->texcoord = glGetAttribLocation(p, "a_texcoord");
-	// Uniform
-	struct r3_shader_uniform *u = &sh->uniform;
-	u->mvp = glGetUniformLocation(p, "u_mvp");
-	u->normal = glGetUniformLocation(p, "u_normal");
-	u->light_position = glGetUniformLocation(p, "u_light_position");
-	u->ambient = glGetUniformLocation(p, "u_ambient");
-	u->specular = glGetUniformLocation(p, "u_specular");
-	u->shininess = glGetUniformLocation(p, "u_shininess");
-	u->sample = glGetUniformLocation(p, "u_sample");
-}
-
-void r3_make_blit_shader(struct r3_shader *sh)
-{
-	// Make from source
-	const char *vsh = (const char *)shader_blit_vert;
-	const int vlen = shader_blit_vert_len; 
-	const char *fsh = (const char *)shader_blit_frag;
-	const int flen = shader_blit_frag_len; 
-	const unsigned int p = r3_make_program_from_src(vsh, vlen, fsh, flen);
-	// Program
-	sh->program = p;
-	glUseProgram(p);
-	// Attrib
-	struct r3_shader_attrib *a = &sh->attrib;
-	a->position = glGetAttribLocation(p, "a_position");
-	a->texcoord = glGetAttribLocation(p, "a_texcoord");
-	// Uniform
-	struct r3_shader_uniform *u = &sh->uniform;
-	u->sample = glGetUniformLocation(p, "u_sample");
-}
-
-void r3_make_blit_alpha_shader(struct r3_shader *sh)
+/*
+void r3_make_blit_alpha_shader()
 {
 	// Make from source
 	const char *vsh = (const char *)shader_blit_vert;
@@ -866,7 +884,7 @@ void r3_make_blit_alpha_shader(struct r3_shader *sh)
 	u->alpha = glGetUniformLocation(p, "u_alpha");
 }
 
-void r3_make_blur_shader(struct r3_shader *sh)
+void r3_make_blur_shader()
 {
 	// Make from source
 	const char *vsh = (const char *)shader_blit_vert;
@@ -891,7 +909,7 @@ void r3_make_blur_shader(struct r3_shader *sh)
 	glUniform1fv(u->coefficients, 3, kernel);
 }
 
-void r3_make_high_pass_shader(struct r3_shader *sh)
+void r3_make_high_pass_shader()
 {
 	// Make from source
 	const char *vsh = (const char *)shader_blit_vert;
@@ -914,7 +932,7 @@ void r3_make_high_pass_shader(struct r3_shader *sh)
 	glUniform1f(u->threshold, 0.85);
 }
 
-void r3_make_light_shader(struct r3_shader *sh)
+void r3_make_light_shader()
 {
 	// Make from source
 	const char *vsh = (const char *)shader_light_vert;
@@ -939,6 +957,8 @@ void r3_make_light_shader(struct r3_shader *sh)
 	u->specular = glGetUniformLocation(p, "u_specular");
 	u->shininess = glGetUniformLocation(p, "u_shininess");
 }
+
+*/
 
 void r3_break_mesh(const struct r3_mesh *m)
 {
