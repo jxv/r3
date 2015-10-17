@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <ml.h>
-#include <r3_sdl.h>
+#include "../include/r3.h"
+#include <SDL2/SDL.h>
 #include <GLES2/gl2.h>
 
 #ifdef GCW0
@@ -52,7 +53,7 @@ struct r3_shader blit, blit_alpha, blur, high_pass, light;
 int main(int argc, char *argv[])
 {
 	{ // Init
-		r3_sdl_init("", _v2i(WINDOW_WIDTH, WINDOW_HEIGHT), &ren);
+		r3_init("", _v2i(WINDOW_WIDTH, WINDOW_HEIGHT));
 		// default screen fb
 		on.fbo = 0;
 		glBindFramebuffer(GL_FRAMEBUFFER, on.fbo);
@@ -109,7 +110,8 @@ int main(int argc, char *argv[])
 			glGenRenderbuffers(1, &rt[i].color);
 			glBindRenderbuffer(GL_RENDERBUFFER, rt[i].color);
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB565, w, h);
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rt[i].color);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER,
+                                rt[i].color);
 			rt[i].tex = r3_make_fbo_tex(w,h);
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 				return EXIT_FAILURE;
@@ -117,7 +119,7 @@ int main(int argc, char *argv[])
 		}
 
 		//r3_make_normal_shader(&res.shader);
-		r3_make_color_normal_texture_shader(&res.shader);
+		/*r3_make_color_normal_texture_shader(&res.shader);*/
 		struct r3_spec *spec = r3_create_cuboid_spec();
 		r3_make_mesh_from_spec(spec, &res.mesh);
 		free(spec);
@@ -125,10 +127,12 @@ int main(int argc, char *argv[])
 		
 		quad = r3_make_quad();
 
-		r3_make_blit_shader(&blit);
+		/*
+        r3_make_blit_shader(&blit);
 		r3_make_blit_alpha_shader(&blit_alpha);
 		r3_make_blur_shader(&blur);
 		r3_make_high_pass_shader(&high_pass);
+        */
 		glUseProgram(high_pass.program);
 		glUniform1f(high_pass.uniform.threshold, 0.0);
 
@@ -170,11 +174,11 @@ int main(int argc, char *argv[])
 				glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
 				glViewport(0, 0, lf[i].size.x, lf[i].size.y);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				r3_render_blit(&quad, &blit, i == 0 ? off.tex : rt[i - 1].tex);
+				/*r3_render_blit(&quad, &blit, i == 0 ? off.tex : rt[i - 1].tex);*/
 
 				glBindFramebuffer(GL_FRAMEBUFFER, rt[i].fbo);
 				glViewport(0, 0, rt[i].size.x, rt[i].size.y);
-				r3_render_high_pass(&quad, &high_pass, lf[i].tex);
+				/*r3_render_high_pass(&quad, &high_pass, lf[i].tex);*/
 
 				glBindFramebuffer(GL_FRAMEBUFFER, lf[i].fbo);
 				glViewport(0, 0, lf[i].size.x, lf[i].size.y);
@@ -199,7 +203,7 @@ int main(int argc, char *argv[])
 			glEnable(GL_BLEND);
 			glDepthFunc(GL_ALWAYS);
 			for (int i = 0; i < COUNT; i++) {
-				r3_render_blit_alpha(&quad, &blit, rt[i].tex, 1);
+				/*r3_render_blit_alpha(&quad, &blit, rt[i].tex, 1);*/
 			}
 			glDepthFunc(GL_LESS);
 			glDisable(GL_BLEND);
@@ -216,8 +220,8 @@ int main(int argc, char *argv[])
 	}
 	// Clean up
 	r3_break_mesh(&res.mesh);
-	r3_break_shader(&res.shader);
-	r3_quit(&ren);
+	/*r3_break_shader(&res.shader);*/
+	r3_quit();
 	return EXIT_SUCCESS;
 }
 

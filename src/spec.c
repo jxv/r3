@@ -4,6 +4,8 @@
 #include <memory.h>
 #include <assert.h>
 
+#include "r3_private.h"
+
 struct r3_spec *r3_create_cuboid_spec() {
 	const float colors[3*24] = {
 		// Red

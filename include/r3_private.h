@@ -1,20 +1,16 @@
-#ifndef R3_H
-#define R3_H
+#ifndef R3_PRIVATE_H
+#define R3_PRIVATE_H
+/*
+struct r3_ren {
+	v2i window_size;
+	unsigned int clear_bits;
+	v3f clear_color;
+	void *backend;
+	void (*render)(struct r3_ren *);
+	void (*quit)(struct r3_ren *);
+};
 
-#include <ml.h>
-#include <stdlib.h>
-#include <GLES2/gl2.h>
-
-bool r3_init(const char *title, v2i dim);
-void r3_clear(float r, float g, float b, unsigned int clear_bits);
-void r3_render();
-void r3_quit();
-
-// AUX API
-unsigned int r3_load_tga_texture(const char *path);
-char* r3_load_tga(const char *fileName, int *width, int *height);
-
-//
+typedef struct r3_ren r3_ren_t;
 
 enum r3_vert {
 	R3_POSITION,
@@ -163,7 +159,6 @@ struct r3_mesh {
 
 typedef struct r3_mesh r3_mesh_t;
 
-/*
 struct r3_shader_attrib {
 	int position;
 	int normal;
@@ -197,7 +192,6 @@ struct r3_shader {
 };
 
 typedef struct r3_shader r3_shader_t;
-*/
 
 unsigned int r3_make_shader(const char *src, unsigned int type, int src_len);
 unsigned int r3_load_shader(const char *path, unsigned int type);
@@ -206,17 +200,14 @@ unsigned int r3_make_program_from_src(const char *vert_src, int vert_src_len, co
 unsigned int r3_make_program_from_src_unsigned(const unsigned char *vsh, int vsh_len, const unsigned char *fsh, int fsh_len);
 unsigned int r3_load_program_from_path(const char *vert_path, const char *frag_path);
 
-void r3_viewport();
-void r3_enable_tests();
-
+void r3_viewport(const r3_ren_t *ren);
+void r3_enable_tests(const r3_ren_t *ren);
 unsigned int r3_make_fbo_tex(int width, int height);
 void r3_make_mesh_from_spec(const r3_spec_t *spec, r3_mesh_t *m);
 r3_mesh_t r3_make_quad();
 
 r3_spec_t *r3_create_cuboid_spec();
 
-
-/*
 void r3_render_blit_alpha(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex, float alpha);
 void r3_render_blit(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex);
 void r3_render_blur_width(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex, float aspect, float width);
@@ -228,22 +219,11 @@ void r3_render_texture(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int t
 void r3_render_color(const r3_mesh_t *m, const r3_shader_t *sh, m4f mvp);
 void r3_render_color_normal_texture(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex,
 	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
-*/
 
-void r3_render_blit_alpha(const r3_mesh_t *m,  unsigned int tex, float alpha);
-void r3_render_blit(const r3_mesh_t *m,  unsigned int tex);
-void r3_render_blur_width(const r3_mesh_t *m,  unsigned int tex, float aspect, float width);
-void r3_render_blur_height(const r3_mesh_t *m,  unsigned int tex, float aspect, float height);
-void r3_render_high_pass(const r3_mesh_t *m,  unsigned int tex);
-void r3_render_normal(const r3_mesh_t *m,  m4f mv, m4f mvp,
-	v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess);
-void r3_render_texture(const r3_mesh_t *m,  unsigned int tex, m4f mvp);
-void r3_render_color(const r3_mesh_t *m,  m4f mvp);
-void r3_render_color_normal_texture(const r3_mesh_t *m,  unsigned int tex,
-	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
+void r3_make_shaders();
 
 void r3_break_mesh(const r3_mesh_t *m);
-//void r3_break_shader(const r3_shader_t *sh);
+void r3_break_shader(const r3_shader_t *sh);
 
 ssize_t r3_verts_tag_sizeof(r3_verts_tag_t tag);
 ssize_t r3_verts_sizeof(const r3_verts_t *verts);
@@ -252,5 +232,7 @@ ssize_t r3_indices_sizeof(const r3_indices_t *indices);
 
 ssize_t r3_offset(r3_verts_tag_t tag, r3_vert_t vert);
 void *r3_offset_ptr(r3_verts_tag_t tag, r3_vert_t vert);
+
+*/
 
 #endif
