@@ -1,7 +1,5 @@
 #r3
 
----
-
 ##Cube Demo
 
 ![Cube 1](https://raw.githubusercontent.com/jxv/r3/master/examples/cube/screenshots/cube_1.png)
