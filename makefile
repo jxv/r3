@@ -6,7 +6,7 @@ all:
 clean:
 	rm libr3.a src/*.o
 install:
-	cp include/*.h /usr/include
+	cp include/r3.h /usr/include
 	cp libr3.a /usr/lib/
 
 gcw0:
@@ -16,5 +16,5 @@ gcw0:
 	mipsel-gcw0-linux-uclibc-ar rvs libr3.a src/*.o
 install_gcw0:
 	mkdir -p /opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
-	cp include/*.h /opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
+	cp include/r3.h /opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
 	cp libr3.a /opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/lib

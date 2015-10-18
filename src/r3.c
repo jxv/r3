@@ -80,8 +80,6 @@ void r3_render()
     SDL_GL_SwapWindow(window);
 }
 
-void r3_load_shaders();
-
 bool r3_init(const char *title, v2i dim)
 {
   if (!r3_sdl_init_video()) return false;
@@ -376,7 +374,7 @@ void r3_load_shaders()
 {
 
   r3_make_normal_shader();
-  //r3_make_cell_shader();
+  r3_make_cell_shader();
   r3_make_texture_shader();
   r3_make_color_shader();
   //r3_make_color_normal_texture_shader();
@@ -467,6 +465,7 @@ GLuint r3_make_shader(const char *src, GLenum type, int src_len)
 {
 	GLuint shader = glCreateShader(type);
 	glShaderSource(shader, 1, &src, src_len == 0 ? NULL : &src_len);
+    //printf("%d\n", type);
 	glCompileShader(shader);
 	GLint status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);

@@ -163,49 +163,6 @@ struct r3_mesh {
 
 typedef struct r3_mesh r3_mesh_t;
 
-/*
-struct r3_shader_attrib {
-	int position;
-	int normal;
-	int texcoord;
-	int color;
-};
-
-typedef struct r3_shader_attrib r3_shader_attrib_t;
-
-struct r3_shader_uniform {
-	int mvp;
-	int normal;
-	int light_position;
-	int ambient;
-	int diffuse;
-	int specular;
-	int shininess;
-	int sample;
-	int coefficients;
-	int offset;
-	int threshold;
-	int alpha;
-};
-
-typedef struct r3_shader_uniform r3_shader_uniform_t;
-
-struct r3_shader {
-	unsigned int program;
-	struct r3_shader_attrib attrib;
-	struct r3_shader_uniform uniform;
-};
-
-typedef struct r3_shader r3_shader_t;
-*/
-
-unsigned int r3_make_shader(const char *src, unsigned int type, int src_len);
-unsigned int r3_load_shader(const char *path, unsigned int type);
-unsigned int r3_make_program(unsigned int vert_shader, unsigned int frag_shader);
-unsigned int r3_make_program_from_src(const char *vert_src, int vert_src_len, const char *frag_src, int frag_src_len);
-unsigned int r3_make_program_from_src_unsigned(const unsigned char *vsh, int vsh_len, const unsigned char *fsh, int fsh_len);
-unsigned int r3_load_program_from_path(const char *vert_path, const char *frag_path);
-
 void r3_viewport();
 void r3_enable_tests();
 
@@ -214,21 +171,6 @@ void r3_make_mesh_from_spec(const r3_spec_t *spec, r3_mesh_t *m);
 r3_mesh_t r3_make_quad();
 
 r3_spec_t *r3_create_cuboid_spec();
-
-
-/*
-void r3_render_blit_alpha(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex, float alpha);
-void r3_render_blit(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex);
-void r3_render_blur_width(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex, float aspect, float width);
-void r3_render_blur_height(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex, float aspect, float height);
-void r3_render_high_pass(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex);
-void r3_render_normal(const r3_mesh_t *m, const r3_shader_t *sh, m4f mv, m4f mvp,
-	v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess);
-void r3_render_texture(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex, m4f mvp);
-void r3_render_color(const r3_mesh_t *m, const r3_shader_t *sh, m4f mvp);
-void r3_render_color_normal_texture(const r3_mesh_t *m, const r3_shader_t *sh, unsigned int tex,
-	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
-*/
 
 void r3_render_blit_alpha(const r3_mesh_t *m,  unsigned int tex, float alpha);
 void r3_render_blit(const r3_mesh_t *m,  unsigned int tex);
@@ -243,7 +185,6 @@ void r3_render_color_normal_texture(const r3_mesh_t *m,  unsigned int tex,
 	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
 
 void r3_break_mesh(const r3_mesh_t *m);
-//void r3_break_shader(const r3_shader_t *sh);
 
 ssize_t r3_verts_tag_sizeof(r3_verts_tag_t tag);
 ssize_t r3_verts_sizeof(const r3_verts_t *verts);

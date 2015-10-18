@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ml.h>
-#include "../include/r3.h"
+#include "../../include/r3.h"
 #include <SDL2/SDL.h>
 #include <GLES2/gl2.h>
 
