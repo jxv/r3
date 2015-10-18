@@ -96,7 +96,7 @@ bool r3_init(const char *title, v2i dim)
 
 #define SETUP_PROGRAM(base) \
 	const char *vsh = (const char *)shader_##base##_vert; \
-	const int vlen = shader_normal_vert_len; \
+	const int vlen = shader_##base##_vert_len; \
 	const char *fsh = (const char *)shader_##base##_frag; \
 	const int  flen = shader_##base##_frag_len; \
   sh_##base.program = r3_make_program_from_src(vsh, vlen, fsh, flen); \
