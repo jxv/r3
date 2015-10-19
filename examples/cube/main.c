@@ -9,7 +9,6 @@
 int main()
 {
         r3_init("", _v2i(320, 240));
-        const r3_mesh_t *cube = r3_cube();
         const float dt = 1.f / 60.f;
         const float aspect = 320.f / 240.f;
 
@@ -31,13 +30,13 @@ int main()
 
                 r3_viewport();
                 r3_clear(_v3f(.2,.3,.3), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                r3_render_color(cube, mvp);
+                r3_render_color(r3_cube(), mvp);
                 r3_render();
 
                 const int end_tick = SDL_GetTicks();
                 const int diff_tick = end_tick - start_tick;
-                if (diff_tick < 24)
-                        SDL_Delay(24 - diff_tick);
+                if (diff_tick < 16)
+                        SDL_Delay(16 - diff_tick);
         }
         r3_quit();
         return 0;
