@@ -169,8 +169,8 @@ void r3_enable_tests();
 unsigned int r3_make_fbo_tex(int width, int height);
 void r3_make_mesh_from_spec(const r3_spec_t *spec, r3_mesh_t *m);
 
-const r3_mesh_t *r3_cube();
-const r3_mesh_t *r3_quad();
+const r3_mesh_t *r3_cube_mesh();
+const r3_mesh_t *r3_quad_mesh();
 
 void r3_render_blit_alpha(const r3_mesh_t *m,  unsigned int tex, float alpha);
 void r3_render_blit(const r3_mesh_t *m,  unsigned int tex);

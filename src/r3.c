@@ -11,7 +11,7 @@
 SDL_Window *window;
 v2i window_dim = {.x = 0, .y = 0};
 SDL_GLContext context;
-struct r3_mesh mesh_cube, mesh_quad;
+struct r3_mesh cube_mesh, quad_mesh;
 
 static bool r3_sdl_init_video()
 {
@@ -565,7 +565,7 @@ void r3_make_cube()
 {
     // TODO: clean up later
     struct r3_spec *spec = r3_create_cuboid_spec();
-    r3_make_mesh_from_spec(spec, &mesh_cube);
+    r3_make_mesh_from_spec(spec, &cube_mesh);
     free(spec);
 }
 
@@ -600,17 +600,17 @@ void r3_make_quad()
     spec.indices.tag = R3_INDICES_USHORT;
     spec.indices.len = 6;
     spec.indices.data = indices;
-    r3_make_mesh_from_spec(&spec, &mesh_quad);  
+    r3_make_mesh_from_spec(&spec, &quad_mesh);  
 
     /* 
-	mesh_quad.num_indices = 6;
-	glGenBuffers(1, &mesh_quad.vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, mesh_quad.vbo);
+	quad_mesh.num_indices = 6;
+	glGenBuffers(1, &quad_mesh.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, quad_mesh.vbo);
 	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(struct r3_pt), verts, GL_STATIC_DRAW);
-	glGenBuffers(1, &mesh_quad.ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_quad.ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh_quad.num_indices * sizeof(unsigned short int), indices, GL_STATIC_DRAW);
-	mesh_quad.verts_tag = R3_VERTS_PT;
+	glGenBuffers(1, &quad_mesh.ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad_mesh.ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, quad_mesh.num_indices * sizeof(unsigned short int), indices, GL_STATIC_DRAW);
+	quad_mesh.verts_tag = R3_VERTS_PT;
     */
 }
 
@@ -989,20 +989,20 @@ ssize_t r3_offset(enum r3_verts_tag tag, enum r3_vert vert)
 	assert(false);
 }
 
-const r3_mesh_t *r3_cube()
+const r3_mesh_t *r3_cube_mesh()
 {
-    return &mesh_cube;
+    return &cube_mesh;
 }
 
-const r3_mesh_t *r3_quad()
+const r3_mesh_t *r3_quad_mesh()
 {
-    return &mesh_quad;
+    return &quad_mesh;
 }
 
 void r3_quit()
 {
-    r3_break_mesh(&mesh_cube);
-    r3_break_mesh(&mesh_quad);
+    r3_break_mesh(&cube_mesh);
+    r3_break_mesh(&quad_mesh);
     glDeleteProgram(sh_normal.program);
     glDeleteProgram(sh_cell.program);
     glDeleteProgram(sh_color.program);

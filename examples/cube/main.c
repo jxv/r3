@@ -30,7 +30,7 @@ int main()
 
                 r3_viewport();
                 r3_clear(_v3f(.2,.3,.3), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                r3_render_color(r3_cube(), mvp);
+                r3_render_color(r3_cube_mesh(), mvp);
                 r3_render();
 
                 const int end_tick = SDL_GetTicks();
