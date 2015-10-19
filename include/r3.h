@@ -168,17 +168,16 @@ void r3_enable_tests();
 
 unsigned int r3_make_fbo_tex(int width, int height);
 void r3_make_mesh_from_spec(const r3_spec_t *spec, r3_mesh_t *m);
-r3_mesh_t r3_make_quad();
 
-r3_spec_t *r3_create_cuboid_spec();
+const r3_mesh_t *r3_cube();
+const r3_mesh_t *r3_quad();
 
 void r3_render_blit_alpha(const r3_mesh_t *m,  unsigned int tex, float alpha);
 void r3_render_blit(const r3_mesh_t *m,  unsigned int tex);
 void r3_render_blur_width(const r3_mesh_t *m,  unsigned int tex, float aspect, float width);
 void r3_render_blur_height(const r3_mesh_t *m,  unsigned int tex, float aspect, float height);
 void r3_render_high_pass(const r3_mesh_t *m,  unsigned int tex);
-void r3_render_normal(const r3_mesh_t *m,  m4f mv, m4f mvp,
-	v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess);
+void r3_render_normal(const r3_mesh_t *m,  m4f mv, m4f mvp, v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess);
 void r3_render_texture(const r3_mesh_t *m,  unsigned int tex, m4f mvp);
 void r3_render_color(const r3_mesh_t *m,  m4f mvp);
 void r3_render_color_normal_texture(const r3_mesh_t *m,  unsigned int tex,

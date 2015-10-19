@@ -6,14 +6,12 @@
 #include <memory.h>
 #include <assert.h>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengles2.h>
-
 #include "r3_private.h"
 
-static SDL_Window *window;
-static v2i window_dim = {.x = 0, .y = 0};
-static SDL_GLContext context;
+SDL_Window *window;
+v2i window_dim = {.x = 0, .y = 0};
+SDL_GLContext context;
+struct r3_mesh mesh_cube, mesh_quad;
 
 static bool r3_sdl_init_video()
 {
@@ -22,8 +20,7 @@ static bool r3_sdl_init_video()
 		return false;
     }
 	return true;
-}
-
+} 
 static void r3_sdl_set_gl_attributes()
 {
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
@@ -82,16 +79,18 @@ void r3_render()
 
 bool r3_init(const char *title, v2i dim)
 {
-  if (!r3_sdl_init_video()) return false;
-  r3_sdl_set_gl_attributes();
-  if (!(window = r3_sdl_create_window(title, dim.x, dim.y))) return false;
-  if (!r3_sdl_create_gl_context()) {
+    if (!r3_sdl_init_video()) return false;
+    r3_sdl_set_gl_attributes();
+    if (!(window = r3_sdl_create_window(title, dim.x, dim.y))) return false;
+    if (!r3_sdl_create_gl_context()) {
     SDL_DestroyWindow(window);
-    return false;
-  }
-  window_dim = dim;
-  r3_load_shaders();
-  return true;
+        return false;
+    }
+    window_dim = dim;
+    r3_load_shaders();
+    r3_make_cube();
+    r3_make_quad();
+    return true;
 }
 
 #define SETUP_PROGRAM(base) \
@@ -99,14 +98,14 @@ bool r3_init(const char *title, v2i dim)
 	const int vlen = shader_##base##_vert_len; \
 	const char *fsh = (const char *)shader_##base##_frag; \
 	const int  flen = shader_##base##_frag_len; \
-  sh_##base.program = r3_make_program_from_src(vsh, vlen, fsh, flen); \
-  glUseProgram(sh_##base.program);
+    sh_##base.program = r3_make_program_from_src(vsh, vlen, fsh, flen); \
+    glUseProgram(sh_##base.program);
 
 #define ATTRIB_LOC(base, loc) \
-  sh_##base.loc = glGetAttribLocation(sh_##base.program, #loc);
+    sh_##base.loc = glGetAttribLocation(sh_##base.program, #loc);
 
 #define UNIFORM_LOC(base, loc) \
-  sh_##base.loc = glGetUniformLocation(sh_##base.program, #loc);
+    sh_##base.loc = glGetUniformLocation(sh_##base.program, #loc);
 
 #include "../shader/normal.vert.h"
 #include "../shader/normal.frag.h"
@@ -306,19 +305,6 @@ void r3_make_gaussian_shader()
   glUniform1fv(sh_gaussian.u_coefficients, 3, kernel);
 }
 
-/*
-#include "../shader/gaussian_2d.frag.h"
-
-struct {
-	GLuint program;
-	GLint a_position;
-	GLint a_texcoord;
-	GLint u_sample;
-	GLint u_coefficients;
-	GLint u_offset;
-} sh_gaussian_2d;
-*/
-
 #include "../shader/high_pass.vert.h"
 #include "../shader/high_pass.frag.h"
 
@@ -377,7 +363,7 @@ void r3_load_shaders()
   r3_make_cell_shader();
   r3_make_texture_shader();
   r3_make_color_shader();
-  //r3_make_color_normal_texture_shader();
+  r3_make_color_normal_texture_shader();
   r3_make_blit_shader();
   r3_make_blit_alpha_shader();
   r3_make_gaussian_shader();
@@ -465,7 +451,6 @@ GLuint r3_make_shader(const char *src, GLenum type, int src_len)
 {
 	GLuint shader = glCreateShader(type);
 	glShaderSource(shader, 1, &src, src_len == 0 ? NULL : &src_len);
-    //printf("%d\n", type);
 	glCompileShader(shader);
 	GLint status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
@@ -575,10 +560,17 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m)
 	m->verts_tag = spec->verts.tag;
 }
 
-struct r3_mesh r3_make_quad()
+void r3_make_cube()
 {
-	struct r3_mesh m;
-	const struct r3_pt verts[4] = {
+    // TODO: clean up later
+    struct r3_spec *spec = r3_create_cuboid_spec();
+    r3_make_mesh_from_spec(spec, &mesh_cube);
+    free(spec);
+}
+
+void r3_make_quad()
+{
+	struct r3_pt verts[4] = {
 		(struct r3_pt) {
 			.position = _v3f(-1, 1, 1),
 			.texcoord = _v2f(0, 1)
@@ -596,19 +588,29 @@ struct r3_mesh r3_make_quad()
 			.texcoord = _v2f(1, 0)
 		},
 	};
-	const unsigned short int indices[6] = {
+	unsigned short int indices[6] = {
 		0, 1, 2,
 		1, 3, 2,
 	};
-	m.num_indices = 6;
-	glGenBuffers(1, &m.vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, m.vbo);
+    struct r3_spec spec;
+    spec.verts.tag = R3_VERTS_PT;
+    spec.verts.len = 4;
+    spec.verts.pt = verts;
+    spec.indices.tag = R3_INDICES_USHORT;
+    spec.indices.len = 6;
+    spec.indices.data = indices;
+    r3_make_mesh_from_spec(&spec, &mesh_quad);  
+
+    /* 
+	mesh_quad.num_indices = 6;
+	glGenBuffers(1, &mesh_quad.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, mesh_quad.vbo);
 	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(struct r3_pt), verts, GL_STATIC_DRAW);
-	glGenBuffers(1, &m.ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m.ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m.num_indices * sizeof(unsigned short int), indices, GL_STATIC_DRAW);
-	m.verts_tag = R3_VERTS_PT;
-	return m;
+	glGenBuffers(1, &mesh_quad.ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_quad.ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh_quad.num_indices * sizeof(unsigned short int), indices, GL_STATIC_DRAW);
+	mesh_quad.verts_tag = R3_VERTS_PT;
+    */
 }
 
 
@@ -986,8 +988,20 @@ ssize_t r3_offset(enum r3_verts_tag tag, enum r3_vert vert)
 	assert(false);
 }
 
+const r3_mesh_t *r3_cube()
+{
+    return &mesh_cube;
+}
+
+const r3_mesh_t *r3_quad()
+{
+    return &mesh_quad;
+}
+
 void r3_quit()
 {
+    r3_break_mesh(&mesh_cube);
+    r3_break_mesh(&mesh_quad);
     glDeleteProgram(sh_normal.program);
     glDeleteProgram(sh_cell.program);
     glDeleteProgram(sh_color.program);
