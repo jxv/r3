@@ -13,8 +13,6 @@ int main()
         const float dt = 1.f / 60.f;
         const float aspect = 320.f / 240.f;
 
-        r3_enable_tests();
-
         bool done = false;
         float angle = 0.f;
         while (!done) {
@@ -32,15 +30,14 @@ int main()
                 const m4f mvp = mulm4f(persp, mv);
 
                 r3_viewport();
-                r3_clear(0.2,0.3,0.3, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                r3_clear(_v3f(.2,.3,.3), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 r3_render_color(cube, mvp);
                 r3_render();
 
                 const int end_tick = SDL_GetTicks();
                 const int diff_tick = end_tick - start_tick;
-                if (diff_tick < 24) {
+                if (diff_tick < 24)
                         SDL_Delay(24 - diff_tick);
-                }
         }
         r3_quit();
         return 0;

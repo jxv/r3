@@ -6,7 +6,7 @@
 #include <GLES2/gl2.h>
 
 bool r3_init(const char *title, v2i dim);
-void r3_clear(float r, float g, float b, unsigned int clear_bits);
+void r3_clear(v3f color, unsigned int clear_bits);
 void r3_render();
 void r3_quit();
 

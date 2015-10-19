@@ -90,6 +90,7 @@ bool r3_init(const char *title, v2i dim)
     r3_load_shaders();
     r3_make_cube();
     r3_make_quad();
+    r3_enable_tests();
     return true;
 }
 
@@ -371,9 +372,9 @@ void r3_load_shaders()
   r3_make_light_shader();
 }
 
-void r3_clear(float r, float g, float b, unsigned int clear_bits)
+void r3_clear(v3f color, unsigned int clear_bits)
 {
-	glClearColor(r, g, b, 1);
+	glClearColor(color.x, color.y, color.z, 1);
 	glClear(clear_bits);
 }
 
