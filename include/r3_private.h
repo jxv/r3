@@ -21,6 +21,6 @@ void r3_make_quad();
 extern SDL_Window *window;
 extern v2i window_dim;
 extern SDL_GLContext context;
-extern struct r3_mesh mesh_cube, mesh_quad;
+extern struct r3_mesh cube_mesh, quad_mesh;
 
 #endif
