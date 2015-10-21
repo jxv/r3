@@ -163,6 +163,17 @@ struct r3_mesh {
 
 typedef struct r3_mesh r3_mesh_t;
 
+struct r3_normal {
+    m3f mv;
+    v3f light_position;
+    v3f ambient_color;
+    v3f diffuse_color;
+    v3f specular_color;
+    float shininess;
+};
+
+typedef struct r3_normal r3_normal_t;
+
 void r3_viewport();
 void r3_enable_tests();
 
@@ -172,16 +183,19 @@ void r3_make_mesh_from_spec(const r3_spec_t *spec, r3_mesh_t *m);
 const r3_mesh_t *r3_cube_mesh();
 const r3_mesh_t *r3_quad_mesh();
 
+void r3_render_pc(const r3_mesh_t *m, m4f mvp);
+void r3_render_pn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
+void r3_render_pcn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
+void r3_render_pt(const r3_mesh_t *m, m4f mvp, unsigned int tex);
+void r3_render_pct(const r3_mesh_t *m, m4f mvp, unsigned int tex);
+void r3_render_pnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_pcnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
+
 void r3_render_blit_alpha(const r3_mesh_t *m,  unsigned int tex, float alpha);
 void r3_render_blit(const r3_mesh_t *m,  unsigned int tex);
 void r3_render_blur_width(const r3_mesh_t *m,  unsigned int tex, float aspect, float width);
 void r3_render_blur_height(const r3_mesh_t *m,  unsigned int tex, float aspect, float height);
 void r3_render_high_pass(const r3_mesh_t *m,  unsigned int tex);
-void r3_render_normal(const r3_mesh_t *m,  m4f mv, m4f mvp, v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess);
-void r3_render_texture(const r3_mesh_t *m,  unsigned int tex, m4f mvp);
-void r3_render_color(const r3_mesh_t *m,  m4f mvp);
-void r3_render_color_normal_texture(const r3_mesh_t *m,  unsigned int tex,
-	m4f mv, m4f mvp, v3f light_position, v3f ambient_material, v3f specular_material, float shininess);
 
 void r3_break_mesh(const r3_mesh_t *m);
 

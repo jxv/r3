@@ -108,8 +108,8 @@ bool r3_init(const char *title, v2i dim)
 #define UNIFORM_LOC(base, loc) \
     sh_##base.loc = glGetUniformLocation(sh_##base.program, #loc);
 
-#include "../shader/normal.vert.h"
-#include "../shader/normal.frag.h"
+#include "../shader/pn.vert.h"
+#include "../shader/pn.frag.h"
 
 struct {
   GLuint program;
@@ -122,21 +122,21 @@ struct {
   GLint u_specular;
   GLint u_shininess;
   GLint u_sample;
-} sh_normal;
+} sh_pn;
 
-void r3_make_normal_shader()
+void r3_make_pn_shader()
 {
-  SETUP_PROGRAM(normal)
-  ATTRIB_LOC(normal, a_position)
-  ATTRIB_LOC(normal, a_normal)
-  UNIFORM_LOC(normal, u_mvp)
-  UNIFORM_LOC(normal, u_normal)
-  UNIFORM_LOC(normal, u_light_position)
-  UNIFORM_LOC(normal, u_ambient)
-  UNIFORM_LOC(normal, u_diffuse)
-  UNIFORM_LOC(normal, u_specular)
-  UNIFORM_LOC(normal, u_shininess)
-  UNIFORM_LOC(normal, u_sample)
+  SETUP_PROGRAM(pn)
+  ATTRIB_LOC(pn, a_position)
+  ATTRIB_LOC(pn, a_normal)
+  UNIFORM_LOC(pn, u_mvp)
+  UNIFORM_LOC(pn, u_normal)
+  UNIFORM_LOC(pn, u_light_position)
+  UNIFORM_LOC(pn, u_ambient)
+  UNIFORM_LOC(pn, u_diffuse)
+  UNIFORM_LOC(pn, u_specular)
+  UNIFORM_LOC(pn, u_shininess)
+  UNIFORM_LOC(pn, u_sample)
 }
 
 #include "../shader/cell.vert.h"
@@ -171,26 +171,26 @@ void r3_make_cell_shader()
   UNIFORM_LOC(cell, u_sample)
 }
 
-#include "../shader/color.vert.h"
-#include "../shader/color.frag.h"
+#include "../shader/pc.vert.h"
+#include "../shader/pc.frag.h"
 
 struct {
 	GLuint program;
 	GLint a_position;
 	GLint a_color;
 	GLint u_mvp;
-} sh_color;
+} sh_pc;
 
-void r3_make_color_shader()
+void r3_make_pc_shader()
 {
-  SETUP_PROGRAM(color)
-  ATTRIB_LOC(color, a_position)
-  ATTRIB_LOC(color, a_color)
-  UNIFORM_LOC(color, u_mvp)
+  SETUP_PROGRAM(pc)
+  ATTRIB_LOC(pc, a_position)
+  ATTRIB_LOC(pc, a_color)
+  UNIFORM_LOC(pc, u_mvp)
 }
 
-#include "../shader/texture.vert.h"
-#include "../shader/texture.frag.h"
+#include "../shader/pt.vert.h"
+#include "../shader/pt.frag.h"
 
 struct {
   GLuint program;
@@ -198,19 +198,19 @@ struct {
   GLint a_texcoord;
   GLint u_mvp;
   GLint u_sample;
-} sh_texture;
+} sh_pt;
 
-void r3_make_texture_shader()
+void r3_make_pt_shader()
 {
-  SETUP_PROGRAM(texture)
-  ATTRIB_LOC(texture, a_position)
-  ATTRIB_LOC(texture, a_texcoord)
-  UNIFORM_LOC(texture, u_mvp)
-  UNIFORM_LOC(texture, u_sample)
+  SETUP_PROGRAM(pt)
+  ATTRIB_LOC(pt, a_position)
+  ATTRIB_LOC(pt, a_texcoord)
+  UNIFORM_LOC(pt, u_mvp)
+  UNIFORM_LOC(pt, u_sample)
 }
 
-#include "../shader/color_normal_texture.vert.h"
-#include "../shader/color_normal_texture.frag.h"
+#include "../shader/pcnt.vert.h"
+#include "../shader/pcnt.frag.h"
 
 struct {
 	GLuint program;
@@ -225,22 +225,22 @@ struct {
 	GLint u_specular;
 	GLint u_shininess;
 	GLint u_sample;
-} sh_color_normal_texture;
+} sh_pcnt;
 
-void r3_make_color_normal_texture_shader()
+void r3_make_pcnt_shader()
 {
-  SETUP_PROGRAM(color_normal_texture)
-  ATTRIB_LOC(color_normal_texture, a_position)
-  ATTRIB_LOC(color_normal_texture, a_normal)
-  ATTRIB_LOC(color_normal_texture, a_color)
-  ATTRIB_LOC(color_normal_texture, a_texcoord)
-  UNIFORM_LOC(color_normal_texture, u_mvp)
-  UNIFORM_LOC(color_normal_texture, u_normal)
-  UNIFORM_LOC(color_normal_texture, u_light_position)
-  UNIFORM_LOC(color_normal_texture, u_ambient)
-  UNIFORM_LOC(color_normal_texture, u_specular)
-  UNIFORM_LOC(color_normal_texture, u_shininess)
-  UNIFORM_LOC(color_normal_texture, u_sample)
+  SETUP_PROGRAM(pcnt)
+  ATTRIB_LOC(pcnt, a_position)
+  ATTRIB_LOC(pcnt, a_normal)
+  ATTRIB_LOC(pcnt, a_color)
+  ATTRIB_LOC(pcnt, a_texcoord)
+  UNIFORM_LOC(pcnt, u_mvp)
+  UNIFORM_LOC(pcnt, u_normal)
+  UNIFORM_LOC(pcnt, u_light_position)
+  UNIFORM_LOC(pcnt, u_ambient)
+  UNIFORM_LOC(pcnt, u_specular)
+  UNIFORM_LOC(pcnt, u_shininess)
+  UNIFORM_LOC(pcnt, u_sample)
 }
 
 #include "../shader/blit.vert.h"
@@ -360,11 +360,11 @@ void r3_make_light_shader()
 void r3_load_shaders()
 {
 
-  r3_make_normal_shader();
   r3_make_cell_shader();
-  r3_make_texture_shader();
-  r3_make_color_shader();
-  r3_make_color_normal_texture_shader();
+  r3_make_pc_shader();
+  r3_make_pn_shader();
+  r3_make_pt_shader();
+  r3_make_pcnt_shader();
   r3_make_blit_shader();
   r3_make_blit_alpha_shader();
   r3_make_gaussian_shader();
@@ -422,7 +422,8 @@ char* r3_load_tga(const char *fileName, int *width, int *height)
 	unsigned char attributes[6];
 	unsigned int imagesize;
 	f = fopen(fileName, "rb");
-	if(f == NULL) return NULL;
+	if (f == NULL) return NULL;
+    if (tgaheader[2] == 2) return NULL; // compression not supported
 
 	if (fread(&tgaheader, sizeof(tgaheader), 1, f) == 0) {
 		fclose(f);
@@ -656,6 +657,129 @@ static void render_drawable(const struct r3_mesh *m, const struct r3_shader *sh,
 }
 */
 
+void r3_render_pc(const r3_mesh_t *m, m4f mvp)
+{
+	const enum r3_verts_tag vt = m->verts_tag;
+	glUseProgram(sh_pc.program);
+	// Set uniforms
+	glUniformMatrix4fv(sh_pc.u_mvp, 1, GL_FALSE, mvp.val);
+	// Set texture
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glEnableVertexAttribArray(sh_pc.a_position);
+	glVertexAttribPointer(sh_pc.a_position, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
+	glEnableVertexAttribArray(sh_pc.a_color);
+	glVertexAttribPointer(sh_pc.a_color, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_COLOR));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(sh_pc.a_position);
+	glDisableVertexAttribArray(sh_pc.a_color);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void r3_render_pn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n)
+{
+    glUseProgram(sh_pn.program);
+    // Set uniforms
+    glUniformMatrix4fv(sh_pn.u_mvp, 1, GL_FALSE, mvp.val);
+    glUniformMatrix3fv(sh_pn.u_normal, 1, 0, n->mv.val);
+    glUniform3fv(sh_pn.u_light_position, 1, n->light_position.val);
+    glUniform3fv(sh_pn.u_ambient, 1, n->ambient_color.val);
+    glUniform3fv(sh_pn.u_diffuse, 1, n->diffuse_color.val);
+    glUniform3fv(sh_pn.u_specular, 1, n->specular_color.val);
+    glUniform1f(sh_pn.u_shininess, n->shininess);
+    // VBO & IBO 
+    glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+    glEnableVertexAttribArray(sh_pn.a_position);
+    glVertexAttribPointer(sh_pn.a_position, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
+    glEnableVertexAttribArray(sh_pn.a_normal);
+    glVertexAttribPointer(sh_pn.a_normal, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+    glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDisableVertexAttribArray(sh_pn.a_position);
+    glDisableVertexAttribArray(sh_pn.a_normal);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void r3_render_pcn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n)
+{
+}
+
+void r3_render_pt(const r3_mesh_t *m, m4f mvp, unsigned int tex)
+{
+	const enum r3_verts_tag vt = m->verts_tag;
+	glUseProgram(sh_pt.program);
+	// Set uniforms
+	glUniformMatrix4fv(sh_pt.u_mvp, 1, GL_FALSE, mvp.val);
+	// Set texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glUniform1i(sh_pt.u_sample, 0);
+	// VBO & IBO 
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glEnableVertexAttribArray(sh_pt.a_position);
+	glVertexAttribPointer(sh_pt.a_position, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
+	glEnableVertexAttribArray(sh_pt.a_texcoord);
+	glVertexAttribPointer(sh_pt.a_texcoord, 2, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_TEXCOORD));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(sh_pt.a_position);
+	glDisableVertexAttribArray(sh_pt.a_texcoord);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void r3_render_pct(const r3_mesh_t *m, m4f mvp, unsigned int tex)
+{
+}
+
+void r3_render_pnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned int tex)
+{
+}
+
+void r3_render_pcnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned int tex)
+{
+	const enum r3_verts_tag vt = m->verts_tag;
+	glUseProgram(sh_pcnt.program);
+	// Set uniforms
+	glUniformMatrix4fv(sh_pcnt.u_mvp, 1, GL_FALSE, mvp.val);
+	glUniformMatrix3fv(sh_pcnt.u_normal, 1, 0, n->mv.val);
+	glUniform3fv(sh_pcnt.u_light_position, 1, n->light_position.val);
+	glUniform3fv(sh_pcnt.u_ambient, 1, n->ambient_color.val);
+	glUniform3fv(sh_pcnt.u_specular, 1, n->specular_color.val);
+	glUniform1f(sh_pcnt.u_shininess, n->shininess);
+	// Set texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glUniform1i(sh_pcnt.u_sample, 0);
+	// VBO & IBO 
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glEnableVertexAttribArray(sh_pcnt.a_position);
+	glVertexAttribPointer(sh_pcnt.a_position, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
+	glEnableVertexAttribArray(sh_pcnt.a_color);
+	glVertexAttribPointer(sh_pcnt.a_color, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_COLOR));
+	glEnableVertexAttribArray(sh_pcnt.a_normal);
+	glVertexAttribPointer(sh_pcnt.a_normal, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_NORMAL));
+	glEnableVertexAttribArray(sh_pcnt.a_texcoord);
+	glVertexAttribPointer(sh_pcnt.a_texcoord, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), (void*)r3_offset(vt, R3_TEXCOORD));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(sh_pcnt.a_position);
+	glDisableVertexAttribArray(sh_pcnt.a_color);
+	glDisableVertexAttribArray(sh_pcnt.a_normal);
+	glDisableVertexAttribArray(sh_pcnt.a_texcoord);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+}
+
 void r3_blit_alpha_render(const struct r3_mesh *m, unsigned int tex, float alpha)
 {
     glUseProgram(sh_blit_alpha.program);
@@ -774,118 +898,6 @@ void render_light(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv, m
 }
 */
 
-void r3_render_normal(const struct r3_mesh *m, m4f mv, m4f mvp,
-		v3f light_position, v3f ambient, v3f diffuse, v3f specular, float shininess)
-{
-	glUseProgram(sh_normal.program);
-	// Set uniforms
-	glUniformMatrix4fv(sh_normal.u_mvp, 1, GL_FALSE, mvp.val);
-	glUniformMatrix3fv(sh_normal.u_normal, 1, 0, m3m4f(mv).val);
-	glUniform3fv(sh_normal.u_light_position, 1, light_position.val);
-	glUniform3fv(sh_normal.u_ambient, 1, ambient.val);
-	glUniform3fv(sh_normal.u_diffuse, 1, diffuse.val);
-	glUniform3fv(sh_normal.u_specular, 1, specular.val);
-	glUniform1f(sh_normal.u_shininess, shininess);
-	// VBO & IBO 
-	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
-	glEnableVertexAttribArray(sh_normal.a_position);
-	glVertexAttribPointer(sh_normal.a_position, 3, GL_FLOAT, GL_FALSE,
-		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
-	glEnableVertexAttribArray(sh_normal.a_normal);
-	glVertexAttribPointer(sh_normal.a_normal, 3, GL_FLOAT, GL_FALSE,
-		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDisableVertexAttribArray(sh_normal.a_position);
-	glDisableVertexAttribArray(sh_normal.a_normal);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void r3_render_texture(const struct r3_mesh *m, unsigned int tex, m4f mvp)
-{
-	const enum r3_verts_tag vt = m->verts_tag;
-	glUseProgram(sh_texture.program);
-	// Set uniforms
-	glUniformMatrix4fv(sh_texture.u_mvp, 1, GL_FALSE, mvp.val);
-	// Set texture
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glUniform1i(sh_texture.u_sample, 0);
-	// VBO & IBO 
-	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
-	glEnableVertexAttribArray(sh_texture.a_position);
-	glVertexAttribPointer(sh_texture.a_position, 3, GL_FLOAT, GL_FALSE,
-        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
-	glEnableVertexAttribArray(sh_texture.a_texcoord);
-	glVertexAttribPointer(sh_texture.a_texcoord, 2, GL_FLOAT, GL_FALSE,
-        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_TEXCOORD));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDisableVertexAttribArray(sh_texture.a_position);
-	glDisableVertexAttribArray(sh_texture.a_texcoord);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void r3_render_color(const struct r3_mesh *m, m4f mvp)
-{
-	const enum r3_verts_tag vt = m->verts_tag;
-	glUseProgram(sh_color.program);
-	// Set uniforms
-	glUniformMatrix4fv(sh_color.u_mvp, 1, GL_FALSE, mvp.val);
-	// Set texture
-	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
-	glEnableVertexAttribArray(sh_color.a_position);
-	glVertexAttribPointer(sh_color.a_position, 3, GL_FLOAT, GL_FALSE,
-        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
-	glEnableVertexAttribArray(sh_color.a_color);
-	glVertexAttribPointer(sh_color.a_color, 3, GL_FLOAT, GL_FALSE,
-		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_COLOR));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDisableVertexAttribArray(sh_color.a_position);
-	glDisableVertexAttribArray(sh_color.a_color);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void r3_render_color_normal_texture(const struct r3_mesh *m, unsigned int tex,
-		m4f mv, m4f mvp, v3f light_position, v3f ambient, v3f specular, float shininess)
-{
-	const enum r3_verts_tag vt = m->verts_tag;
-	glUseProgram(sh_color_normal_texture.program);
-	// Set uniforms
-	glUniformMatrix4fv(sh_color_normal_texture.u_mvp, 1, GL_FALSE, mvp.val);
-	glUniformMatrix3fv(sh_color_normal_texture.u_normal, 1, 0, m3m4f(mv).val);
-	glUniform3fv(sh_color_normal_texture.u_light_position, 1, light_position.val);
-	glUniform3fv(sh_color_normal_texture.u_ambient, 1, ambient.val);
-	glUniform3fv(sh_color_normal_texture.u_specular, 1, specular.val);
-	glUniform1f(sh_color_normal_texture.u_shininess, shininess);
-	// Set texture
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glUniform1i(sh_color_normal_texture.u_sample, 0);
-	// VBO & IBO 
-	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
-	glEnableVertexAttribArray(sh_color_normal_texture.a_position);
-	glVertexAttribPointer(sh_color_normal_texture.a_position, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
-	glEnableVertexAttribArray(sh_color_normal_texture.a_color);
-	glVertexAttribPointer(sh_color_normal_texture.a_color, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_COLOR));
-	glEnableVertexAttribArray(sh_color_normal_texture.a_normal);
-	glVertexAttribPointer(sh_color_normal_texture.a_normal, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_NORMAL));
-	glEnableVertexAttribArray(sh_color_normal_texture.a_texcoord);
-	glVertexAttribPointer(sh_color_normal_texture.a_texcoord, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), (void*)r3_offset(vt, R3_TEXCOORD));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDisableVertexAttribArray(sh_color_normal_texture.a_position);
-	glDisableVertexAttribArray(sh_color_normal_texture.a_color);
-	glDisableVertexAttribArray(sh_color_normal_texture.a_normal);
-	glDisableVertexAttribArray(sh_color_normal_texture.a_texcoord);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
 unsigned int r3_load_tga_texture(const char *path)
 {
 	int width, height;
@@ -1003,11 +1015,11 @@ void r3_quit()
 {
     r3_break_mesh(&cube_mesh);
     r3_break_mesh(&quad_mesh);
-    glDeleteProgram(sh_normal.program);
     glDeleteProgram(sh_cell.program);
-    glDeleteProgram(sh_color.program);
-    glDeleteProgram(sh_texture.program);
-    glDeleteProgram(sh_color_normal_texture.program);
+    glDeleteProgram(sh_pc.program);
+    glDeleteProgram(sh_pn.program);
+    glDeleteProgram(sh_pt.program);
+    glDeleteProgram(sh_pcnt.program);
     glDeleteProgram(sh_blit.program);
     glDeleteProgram(sh_blit_alpha.program);
     glDeleteProgram(sh_gaussian.program);

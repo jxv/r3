@@ -12,6 +12,14 @@ int main()
         const float dt = 1.f / 60.f;
         const float aspect = 320.f / 240.f;
 
+        r3_normal_t normal = {
+            .light_position = _v3f(.25, .25, .25),
+            .ambient_color = _v3f(.2, .2, .2),
+            .diffuse_color = _v3f(0, 0, 0),
+            .shininess = 0,
+        };
+        const unsigned int tex = r3_load_tga_texture("r3.tga");
+
         bool done = false;
         float angle = 0.f;
         while (!done) {
@@ -27,10 +35,12 @@ int main()
                 const m4f rot = rotm4f(angle, _v3f(0.9, 0.6, 0.1));
                 const m4f mv = addm4f(mulm4f(rot, scalem4f(eyem4f(), _v3f(3,3,3))), translate);
                 const m4f mvp = mulm4f(persp, mv);
+                normal.mv = m3m4f(mv);
 
                 r3_viewport();
                 r3_clear(_v3f(.2,.3,.3), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                r3_render_color(r3_cube_mesh(), mvp);
+                r3_render_pc(r3_cube_mesh(), mvp);
+                //r3_render_pt(r3_cube_mesh(), mvp, tex);
                 r3_render();
 
                 const int end_tick = SDL_GetTicks();
