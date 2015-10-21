@@ -21,6 +21,7 @@ static bool r3_sdl_init_video()
     }
 	return true;
 } 
+
 static void r3_sdl_set_gl_attributes()
 {
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
@@ -222,7 +223,6 @@ struct {
   GLint u_ambient;
   GLint u_specular;
   GLint u_shininess;
-  GLint u_sample;
 } sh_pcn;
 
 void r3_make_pcn_shader()
@@ -237,7 +237,6 @@ void r3_make_pcn_shader()
   UNIFORM_LOC(pcn, u_ambient)
   UNIFORM_LOC(pcn, u_specular)
   UNIFORM_LOC(pcn, u_shininess)
-  UNIFORM_LOC(pcn, u_sample)
 }
 
 #include "../shader/pcnt.vert.h"
