@@ -22,12 +22,21 @@ int main()
 
         bool done = false;
         float angle = 0.f;
+        int mode = 0;
         while (!done) {
                 const int start_tick = SDL_GetTicks();
 
                 SDL_Event event;
-                while (SDL_PollEvent(&event))
-                        done |= event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE;
+                while (SDL_PollEvent(&event)) {
+                        if (event.type == SDL_KEYDOWN) {
+                            switch (event.key.keysym.sym) {
+                            case SDLK_ESCAPE: done = true; break;
+                            case SDLK_LEFT: mode = (mode + 6) % 7; break;
+                            case SDLK_RIGHT: mode = (mode + 1) % 7; break;
+                            default: break;
+                            }
+                        }
+                }
 
                 angle = fmodf(angle + dt * 3.5f, M_PI * 2);
                 const m4f persp = perspf(45, aspect, 1, 20);
@@ -39,13 +48,17 @@ int main()
 
                 r3_viewport();
                 r3_clear(_v3f(.2,.3,.3), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                //r3_render_pc(r3_cube_mesh(), mvp);
-                //r3_render_pn(r3_cube_mesh(), mvp, &normal);
-                //r3_render_pt(r3_cube_mesh(), mvp, tex);
-                //r3_render_pcn(r3_cube_mesh(), mvp, &normal);
-                //r3_render_pct(r3_cube_mesh(), mvp, tex);
-                r3_render_pnt(r3_cube_mesh(), mvp, &normal, tex);
-                //r3_render_pcnt(r3_cube_mesh(), mvp, &normal, tex);
+
+                switch (mode) {
+                case 0: r3_render_pc(r3_cube_mesh(), mvp); break;
+                case 1: r3_render_pn(r3_cube_mesh(), mvp, &normal); break;
+                case 2: r3_render_pt(r3_cube_mesh(), mvp, tex); break;
+                case 3: r3_render_pcn(r3_cube_mesh(), mvp, &normal); break;
+                case 4: r3_render_pct(r3_cube_mesh(), mvp, tex); break;
+                case 5: r3_render_pnt(r3_cube_mesh(), mvp, &normal, tex); break;
+                case 6: r3_render_pcnt(r3_cube_mesh(), mvp, &normal, tex); break;
+                default: break;
+                }
                 r3_render();
 
                 const int end_tick = SDL_GetTicks();
