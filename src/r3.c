@@ -261,6 +261,37 @@ void r3_make_pct_shader()
   UNIFORM_LOC(pct, u_sample)
 }
 
+#include "../shader/pnt.vert.h"
+#include "../shader/pnt.frag.h"
+
+struct {
+	GLuint program;
+	GLint a_position;
+	GLint a_normal;
+	GLint a_texcoord;
+	GLint u_mvp;
+	GLint u_normal;
+	GLint u_light_position;
+	GLint u_ambient;
+	GLint u_specular;
+	GLint u_shininess;
+	GLint u_sample;
+} sh_pnt;
+
+void r3_make_pnt_shader()
+{
+  SETUP_PROGRAM(pnt)
+  ATTRIB_LOC(pnt, a_position)
+  ATTRIB_LOC(pnt, a_normal)
+  ATTRIB_LOC(pnt, a_texcoord)
+  UNIFORM_LOC(pnt, u_mvp)
+  UNIFORM_LOC(pnt, u_normal)
+  UNIFORM_LOC(pnt, u_light_position)
+  UNIFORM_LOC(pnt, u_ambient)
+  UNIFORM_LOC(pnt, u_specular)
+  UNIFORM_LOC(pnt, u_shininess)
+  UNIFORM_LOC(pnt, u_sample)
+}
 
 #include "../shader/pcnt.vert.h"
 #include "../shader/pcnt.frag.h"
@@ -419,6 +450,7 @@ void r3_load_shaders()
   r3_make_pt_shader();
   r3_make_pcn_shader();
   r3_make_pct_shader();
+  r3_make_pnt_shader();
   r3_make_pcnt_shader();
   r3_make_blit_shader();
   r3_make_blit_alpha_shader();
@@ -849,6 +881,37 @@ void r3_render_pct(const r3_mesh_t *m, m4f mvp, unsigned int tex)
 
 void r3_render_pnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned int tex)
 {
+	const enum r3_verts_tag vt = m->verts_tag;
+	glUseProgram(sh_pcnt.program);
+	// Set uniforms
+	glUniformMatrix4fv(sh_pcnt.u_mvp, 1, GL_FALSE, mvp.val);
+	glUniformMatrix3fv(sh_pcnt.u_normal, 1, 0, n->mv.val);
+	glUniform3fv(sh_pcnt.u_light_position, 1, n->light_position.val);
+	glUniform3fv(sh_pcnt.u_ambient, 1, n->ambient_color.val);
+	glUniform3fv(sh_pcnt.u_specular, 1, n->specular_color.val);
+	glUniform1f(sh_pcnt.u_shininess, n->shininess);
+	// Set texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glUniform1i(sh_pcnt.u_sample, 0);
+	// VBO & IBO 
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glEnableVertexAttribArray(sh_pcnt.a_position);
+	glVertexAttribPointer(sh_pcnt.a_position, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
+	glEnableVertexAttribArray(sh_pcnt.a_normal);
+	glVertexAttribPointer(sh_pcnt.a_normal, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_NORMAL));
+	glEnableVertexAttribArray(sh_pcnt.a_texcoord);
+	glVertexAttribPointer(sh_pcnt.a_texcoord, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(vt), (void*)r3_offset(vt, R3_TEXCOORD));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(sh_pcnt.a_position);
+	glDisableVertexAttribArray(sh_pcnt.a_normal);
+	glDisableVertexAttribArray(sh_pcnt.a_texcoord);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void r3_render_pcnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned int tex)
@@ -1128,6 +1191,7 @@ void r3_quit()
     glDeleteProgram(sh_pt.program);
     glDeleteProgram(sh_pcn.program);
     glDeleteProgram(sh_pct.program);
+    glDeleteProgram(sh_pnt.program);
     glDeleteProgram(sh_pcnt.program);
     glDeleteProgram(sh_blit.program);
     glDeleteProgram(sh_blit_alpha.program);

@@ -14,8 +14,8 @@ int main()
 
         r3_normal_t normal = {
             .light_position = _v3f(.25, .25, .25),
-            .ambient_color = _v3f(.2, .2, .2),
-            .diffuse_color = _v3f(.2, .4, .5),
+            .ambient_color = _v3f(.0, .0, .0),
+            .diffuse_color = _v3f(1, 1, 1),
             .shininess = 100,
         };
         const unsigned int tex = r3_load_tga_texture("r3.tga");
@@ -43,8 +43,8 @@ int main()
                 //r3_render_pn(r3_cube_mesh(), mvp, &normal);
                 //r3_render_pt(r3_cube_mesh(), mvp, tex);
                 //r3_render_pcn(r3_cube_mesh(), mvp, &normal);
-                r3_render_pct(r3_cube_mesh(), mvp, tex);
-                //r3_render_pnt(r3_cube_mesh(), mvp, &normal, tex);
+                //r3_render_pct(r3_cube_mesh(), mvp, tex);
+                r3_render_pnt(r3_cube_mesh(), mvp, &normal, tex);
                 //r3_render_pcnt(r3_cube_mesh(), mvp, &normal, tex);
                 r3_render();
 
