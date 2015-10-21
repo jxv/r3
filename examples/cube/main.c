@@ -42,7 +42,10 @@ int main()
                 //r3_render_pc(r3_cube_mesh(), mvp);
                 //r3_render_pn(r3_cube_mesh(), mvp, &normal);
                 //r3_render_pt(r3_cube_mesh(), mvp, tex);
-                r3_render_pcn(r3_cube_mesh(), mvp, &normal);
+                //r3_render_pcn(r3_cube_mesh(), mvp, &normal);
+                r3_render_pct(r3_cube_mesh(), mvp, tex);
+                //r3_render_pnt(r3_cube_mesh(), mvp, &normal, tex);
+                //r3_render_pcnt(r3_cube_mesh(), mvp, &normal, tex);
                 r3_render();
 
                 const int end_tick = SDL_GetTicks();

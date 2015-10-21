@@ -239,6 +239,29 @@ void r3_make_pcn_shader()
   UNIFORM_LOC(pcn, u_shininess)
 }
 
+#include "../shader/pct.vert.h"
+#include "../shader/pct.frag.h"
+
+struct {
+	GLuint program;
+	GLint a_position;
+	GLint a_color;
+	GLint a_texcoord;
+	GLint u_mvp;
+	GLint u_sample;
+} sh_pct;
+
+void r3_make_pct_shader()
+{
+  SETUP_PROGRAM(pct)
+  ATTRIB_LOC(pct, a_position)
+  ATTRIB_LOC(pct, a_color)
+  ATTRIB_LOC(pct, a_texcoord)
+  UNIFORM_LOC(pct, u_mvp)
+  UNIFORM_LOC(pct, u_sample)
+}
+
+
 #include "../shader/pcnt.vert.h"
 #include "../shader/pcnt.frag.h"
 
@@ -395,6 +418,7 @@ void r3_load_shaders()
   r3_make_pn_shader();
   r3_make_pt_shader();
   r3_make_pcn_shader();
+  r3_make_pct_shader();
   r3_make_pcnt_shader();
   r3_make_blit_shader();
   r3_make_blit_alpha_shader();
@@ -795,6 +819,32 @@ void r3_render_pcn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n)
 
 void r3_render_pct(const r3_mesh_t *m, m4f mvp, unsigned int tex)
 {
+	const enum r3_verts_tag vt = m->verts_tag;
+	glUseProgram(sh_pct.program);
+	// Set uniforms
+	glUniformMatrix4fv(sh_pct.u_mvp, 1, GL_FALSE, mvp.val);
+	// Set texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glUniform1i(sh_pct.u_sample, 0);
+	// VBO & IBO 
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glEnableVertexAttribArray(sh_pct.a_position);
+	glVertexAttribPointer(sh_pct.a_position, 3, GL_FLOAT,
+        GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
+	glEnableVertexAttribArray(sh_pct.a_color);
+	glVertexAttribPointer(sh_pct.a_color, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_COLOR));
+	glEnableVertexAttribArray(sh_pct.a_texcoord);
+	glVertexAttribPointer(sh_pct.a_texcoord, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(vt), (void*)r3_offset(vt, R3_TEXCOORD));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(sh_pct.a_position);
+	glDisableVertexAttribArray(sh_pct.a_color);
+	glDisableVertexAttribArray(sh_pct.a_texcoord);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void r3_render_pnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned int tex)
@@ -1077,6 +1127,7 @@ void r3_quit()
     glDeleteProgram(sh_pn.program);
     glDeleteProgram(sh_pt.program);
     glDeleteProgram(sh_pcn.program);
+    glDeleteProgram(sh_pct.program);
     glDeleteProgram(sh_pcnt.program);
     glDeleteProgram(sh_blit.program);
     glDeleteProgram(sh_blit_alpha.program);
