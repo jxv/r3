@@ -107,38 +107,6 @@ bool r3_init(const char *title, v2i dim)
 
 #define UNIFORM_LOC(base, loc) \
     sh_##base.loc = glGetUniformLocation(sh_##base.program, #loc);
-
-#include "../shader/pn.vert.h"
-#include "../shader/pn.frag.h"
-
-struct {
-  GLuint program;
-  GLint a_position, a_normal;
-  GLint u_mvp;
-  GLint u_normal;
-  GLint u_light_position;
-  GLint u_ambient;
-  GLint u_diffuse;
-  GLint u_specular;
-  GLint u_shininess;
-  GLint u_sample;
-} sh_pn;
-
-void r3_make_pn_shader()
-{
-  SETUP_PROGRAM(pn)
-  ATTRIB_LOC(pn, a_position)
-  ATTRIB_LOC(pn, a_normal)
-  UNIFORM_LOC(pn, u_mvp)
-  UNIFORM_LOC(pn, u_normal)
-  UNIFORM_LOC(pn, u_light_position)
-  UNIFORM_LOC(pn, u_ambient)
-  UNIFORM_LOC(pn, u_diffuse)
-  UNIFORM_LOC(pn, u_specular)
-  UNIFORM_LOC(pn, u_shininess)
-  UNIFORM_LOC(pn, u_sample)
-}
-
 #include "../shader/cell.vert.h"
 #include "../shader/cell.frag.h"
 
@@ -189,6 +157,37 @@ void r3_make_pc_shader()
   UNIFORM_LOC(pc, u_mvp)
 }
 
+#include "../shader/pn.vert.h"
+#include "../shader/pn.frag.h"
+
+struct {
+  GLuint program;
+  GLint a_position, a_normal;
+  GLint u_mvp;
+  GLint u_normal;
+  GLint u_light_position;
+  GLint u_ambient;
+  GLint u_diffuse;
+  GLint u_specular;
+  GLint u_shininess;
+  GLint u_sample;
+} sh_pn;
+
+void r3_make_pn_shader()
+{
+  SETUP_PROGRAM(pn)
+  ATTRIB_LOC(pn, a_position)
+  ATTRIB_LOC(pn, a_normal)
+  UNIFORM_LOC(pn, u_mvp)
+  UNIFORM_LOC(pn, u_normal)
+  UNIFORM_LOC(pn, u_light_position)
+  UNIFORM_LOC(pn, u_ambient)
+  UNIFORM_LOC(pn, u_diffuse)
+  UNIFORM_LOC(pn, u_specular)
+  UNIFORM_LOC(pn, u_shininess)
+  UNIFORM_LOC(pn, u_sample)
+}
+
 #include "../shader/pt.vert.h"
 #include "../shader/pt.frag.h"
 
@@ -207,6 +206,38 @@ void r3_make_pt_shader()
   ATTRIB_LOC(pt, a_texcoord)
   UNIFORM_LOC(pt, u_mvp)
   UNIFORM_LOC(pt, u_sample)
+}
+
+#include "../shader/pcn.vert.h"
+#include "../shader/pcn.frag.h"
+
+struct {
+  GLuint program;
+  GLint a_position;
+  GLint a_color;
+  GLint a_normal;
+  GLint u_mvp;
+  GLint u_normal;
+  GLint u_light_position;
+  GLint u_ambient;
+  GLint u_specular;
+  GLint u_shininess;
+  GLint u_sample;
+} sh_pcn;
+
+void r3_make_pcn_shader()
+{
+  SETUP_PROGRAM(pcn)
+  ATTRIB_LOC(pcn, a_position)
+  ATTRIB_LOC(pcn, a_color)
+  ATTRIB_LOC(pcn, a_normal)
+  UNIFORM_LOC(pcn, u_mvp)
+  UNIFORM_LOC(pcn, u_normal)
+  UNIFORM_LOC(pcn, u_light_position)
+  UNIFORM_LOC(pcn, u_ambient)
+  UNIFORM_LOC(pcn, u_specular)
+  UNIFORM_LOC(pcn, u_shininess)
+  UNIFORM_LOC(pcn, u_sample)
 }
 
 #include "../shader/pcnt.vert.h"
@@ -364,6 +395,7 @@ void r3_load_shaders()
   r3_make_pc_shader();
   r3_make_pn_shader();
   r3_make_pt_shader();
+  r3_make_pcn_shader();
   r3_make_pcnt_shader();
   r3_make_blit_shader();
   r3_make_blit_alpha_shader();
@@ -706,10 +738,6 @@ void r3_render_pn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_pcn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n)
-{
-}
-
 void r3_render_pt(const r3_mesh_t *m, m4f mvp, unsigned int tex)
 {
 	const enum r3_verts_tag vt = m->verts_tag;
@@ -735,6 +763,36 @@ void r3_render_pt(const r3_mesh_t *m, m4f mvp, unsigned int tex)
 	glDisableVertexAttribArray(sh_pt.a_texcoord);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
+void r3_render_pcn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n)
+{
+    glUseProgram(sh_pcn.program);
+    // Set uniforms
+    glUniformMatrix4fv(sh_pcn.u_mvp, 1, GL_FALSE, mvp.val);
+    glUniformMatrix3fv(sh_pcn.u_normal, 1, 0, n->mv.val);
+    glUniform3fv(sh_pcn.u_light_position, 1, n->light_position.val);
+    glUniform3fv(sh_pcn.u_ambient, 1, n->ambient_color.val);
+    glUniform3fv(sh_pcn.u_specular, 1, n->specular_color.val);
+    glUniform1f(sh_pcn.u_shininess, n->shininess);
+    // VBO & IBO 
+    glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+    glEnableVertexAttribArray(sh_pcn.a_position);
+    glVertexAttribPointer(sh_pcn.a_position, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
+ 	glEnableVertexAttribArray(sh_pc.a_color);
+	glVertexAttribPointer(sh_pc.a_color, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_COLOR));
+    glEnableVertexAttribArray(sh_pcn.a_normal);
+    glVertexAttribPointer(sh_pcn.a_normal, 3, GL_FLOAT, GL_FALSE,
+        r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+    glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDisableVertexAttribArray(sh_pcn.a_position);
+    glDisableVertexAttribArray(sh_pcn.a_normal);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 
 void r3_render_pct(const r3_mesh_t *m, m4f mvp, unsigned int tex)
 {
@@ -1019,6 +1077,7 @@ void r3_quit()
     glDeleteProgram(sh_pc.program);
     glDeleteProgram(sh_pn.program);
     glDeleteProgram(sh_pt.program);
+    glDeleteProgram(sh_pcn.program);
     glDeleteProgram(sh_pcnt.program);
     glDeleteProgram(sh_blit.program);
     glDeleteProgram(sh_blit_alpha.program);

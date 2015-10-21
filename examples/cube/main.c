@@ -15,8 +15,8 @@ int main()
         r3_normal_t normal = {
             .light_position = _v3f(.25, .25, .25),
             .ambient_color = _v3f(.2, .2, .2),
-            .diffuse_color = _v3f(0, 0, 0),
-            .shininess = 0,
+            .diffuse_color = _v3f(.2, .4, .5),
+            .shininess = 100,
         };
         const unsigned int tex = r3_load_tga_texture("r3.tga");
 
@@ -39,8 +39,10 @@ int main()
 
                 r3_viewport();
                 r3_clear(_v3f(.2,.3,.3), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                r3_render_pc(r3_cube_mesh(), mvp);
+                //r3_render_pc(r3_cube_mesh(), mvp);
+                //r3_render_pn(r3_cube_mesh(), mvp, &normal);
                 //r3_render_pt(r3_cube_mesh(), mvp, tex);
+                r3_render_pcn(r3_cube_mesh(), mvp, &normal);
                 r3_render();
 
                 const int end_tick = SDL_GetTicks();
