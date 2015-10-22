@@ -183,6 +183,14 @@ void r3_make_mesh_from_spec(const r3_spec_t *spec, r3_mesh_t *m);
 const r3_mesh_t *r3_cube_mesh();
 const r3_mesh_t *r3_quad_mesh();
 
+void r3_render_range_pc(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp);
+void r3_render_range_pn(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
+void r3_render_range_pcn(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
+void r3_render_range_pt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
+void r3_render_range_pct(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
+void r3_render_range_pnt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_range_pcnt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
+
 void r3_render_pc(const r3_mesh_t *m, m4f mvp);
 void r3_render_pn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
 void r3_render_pcn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);

@@ -744,7 +744,9 @@ static void render_drawable(const struct r3_mesh *m, const struct r3_shader *sh,
 }
 */
 
-void r3_render_pc(const r3_mesh_t *m, m4f mvp)
+void r3_render_range_pc(const r3_mesh_t *m, 
+        int start_idx, int end_idx,
+        m4f mvp)
 {
 	const enum r3_verts_tag vt = m->verts_tag;
 	glUseProgram(sh_pc.program);
@@ -759,41 +761,59 @@ void r3_render_pc(const r3_mesh_t *m, m4f mvp)
 	glVertexAttribPointer(sh_pc.a_color, 3, GL_FLOAT, GL_FALSE,
 		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_COLOR));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+       	glDrawElements(GL_TRIANGLES, 1 + end_idx - start_idx, GL_UNSIGNED_SHORT,
+                (void*)(sizeof(GLushort) * start_idx));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh_pc.a_position);
 	glDisableVertexAttribArray(sh_pc.a_color);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_pn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n)
+void r3_render_pc(const r3_mesh_t *m,
+        m4f mvp)
 {
-    glUseProgram(sh_pn.program);
-    // Set uniforms
-    glUniformMatrix4fv(sh_pn.u_mvp, 1, GL_FALSE, mvp.val);
-    glUniformMatrix3fv(sh_pn.u_normal, 1, 0, n->mv.val);
-    glUniform3fv(sh_pn.u_light_position, 1, n->light_position.val);
-    glUniform3fv(sh_pn.u_ambient, 1, n->ambient_color.val);
-    glUniform3fv(sh_pn.u_diffuse, 1, n->diffuse_color.val);
-    glUniform3fv(sh_pn.u_specular, 1, n->specular_color.val);
-    glUniform1f(sh_pn.u_shininess, n->shininess);
-    // VBO & IBO 
-    glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
-    glEnableVertexAttribArray(sh_pn.a_position);
-    glVertexAttribPointer(sh_pn.a_position, 3, GL_FLOAT, GL_FALSE,
-        r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
-    glEnableVertexAttribArray(sh_pn.a_normal);
-    glVertexAttribPointer(sh_pn.a_normal, 3, GL_FLOAT, GL_FALSE,
-        r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-    glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDisableVertexAttribArray(sh_pn.a_position);
-    glDisableVertexAttribArray(sh_pn.a_normal);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+        r3_render_range_pc(m, 0, m->num_indices - 1, mvp);
 }
 
-void r3_render_pt(const r3_mesh_t *m, m4f mvp, unsigned int tex)
+void r3_render_range_pn(const r3_mesh_t *m,
+        int start_idx, int end_idx,
+        m4f mvp, const r3_normal_t *n)
+{
+        glUseProgram(sh_pn.program);
+        // Set uniforms
+        glUniformMatrix4fv(sh_pn.u_mvp, 1, GL_FALSE, mvp.val);
+        glUniformMatrix3fv(sh_pn.u_normal, 1, 0, n->mv.val);
+        glUniform3fv(sh_pn.u_light_position, 1, n->light_position.val);
+        glUniform3fv(sh_pn.u_ambient, 1, n->ambient_color.val);
+        glUniform3fv(sh_pn.u_diffuse, 1, n->diffuse_color.val);
+        glUniform3fv(sh_pn.u_specular, 1, n->specular_color.val);
+        glUniform1f(sh_pn.u_shininess, n->shininess);
+        // VBO & IBO 
+        glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+        glEnableVertexAttribArray(sh_pn.a_position);
+        glVertexAttribPointer(sh_pn.a_position, 3, GL_FLOAT, GL_FALSE,
+                r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
+        glEnableVertexAttribArray(sh_pn.a_normal);
+        glVertexAttribPointer(sh_pn.a_normal, 3, GL_FLOAT, GL_FALSE,
+                r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+       	glDrawElements(GL_TRIANGLES, 1 + end_idx - start_idx, GL_UNSIGNED_SHORT,
+                (void*)(sizeof(GLushort) * start_idx));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glDisableVertexAttribArray(sh_pn.a_position);
+        glDisableVertexAttribArray(sh_pn.a_normal);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void r3_render_pn(const r3_mesh_t *m,
+        m4f mvp, const r3_normal_t *n)
+{
+        r3_render_range_pn(m, 0, m->num_indices - 1, mvp, n);
+}
+
+void r3_render_range_pt(const r3_mesh_t *m,
+        int start_idx, int end_idx,
+        m4f mvp, unsigned int tex)
 {
 	const enum r3_verts_tag vt = m->verts_tag;
 	glUseProgram(sh_pt.program);
@@ -812,44 +832,61 @@ void r3_render_pt(const r3_mesh_t *m, m4f mvp, unsigned int tex)
 	glVertexAttribPointer(sh_pt.a_texcoord, 2, GL_FLOAT, GL_FALSE,
         r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_TEXCOORD));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+       	glDrawElements(GL_TRIANGLES, 1 + end_idx - start_idx, GL_UNSIGNED_SHORT,
+                (void*)(sizeof(GLushort) * start_idx));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh_pt.a_position);
 	glDisableVertexAttribArray(sh_pt.a_texcoord);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_pcn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n)
+void r3_render_pt(const r3_mesh_t *m,
+        m4f mvp, unsigned int tex)
 {
-    glUseProgram(sh_pcn.program);
-    // Set uniforms
-    glUniformMatrix4fv(sh_pcn.u_mvp, 1, GL_FALSE, mvp.val);
-    glUniformMatrix3fv(sh_pcn.u_normal, 1, 0, n->mv.val);
-    glUniform3fv(sh_pcn.u_light_position, 1, n->light_position.val);
-    glUniform3fv(sh_pcn.u_ambient, 1, n->ambient_color.val);
-    glUniform3fv(sh_pcn.u_specular, 1, n->specular_color.val);
-    glUniform1f(sh_pcn.u_shininess, n->shininess);
-    // VBO & IBO 
-    glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
-    glEnableVertexAttribArray(sh_pcn.a_position);
-    glVertexAttribPointer(sh_pcn.a_position, 3, GL_FLOAT, GL_FALSE,
-        r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
+        r3_render_range_pt(m, 0, m->num_indices - 1, mvp, tex);
+}
+
+void r3_render_range_pcn(const r3_mesh_t *m,
+        int start_idx, int end_idx,
+        m4f mvp, const r3_normal_t *n)
+{
+	glUseProgram(sh_pcn.program);
+	// Set uniforms
+	glUniformMatrix4fv(sh_pcn.u_mvp, 1, GL_FALSE, mvp.val);
+	glUniformMatrix3fv(sh_pcn.u_normal, 1, 0, n->mv.val);
+	glUniform3fv(sh_pcn.u_light_position, 1, n->light_position.val);
+	glUniform3fv(sh_pcn.u_ambient, 1, n->ambient_color.val);
+	glUniform3fv(sh_pcn.u_specular, 1, n->specular_color.val);
+	glUniform1f(sh_pcn.u_shininess, n->shininess);
+	// VBO & IBO 
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	glEnableVertexAttribArray(sh_pcn.a_position);
+	glVertexAttribPointer(sh_pcn.a_position, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_POSITION));
  	glEnableVertexAttribArray(sh_pc.a_color);
 	glVertexAttribPointer(sh_pc.a_color, 3, GL_FLOAT, GL_FALSE,
 		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_COLOR));
-    glEnableVertexAttribArray(sh_pcn.a_normal);
-    glVertexAttribPointer(sh_pcn.a_normal, 3, GL_FLOAT, GL_FALSE,
-        r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-    glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glDisableVertexAttribArray(sh_pcn.a_position);
-    glDisableVertexAttribArray(sh_pcn.a_normal);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glEnableVertexAttribArray(sh_pcn.a_normal);
+	glVertexAttribPointer(sh_pcn.a_normal, 3, GL_FLOAT, GL_FALSE,
+		r3_verts_tag_sizeof(m->verts_tag), (void*)r3_offset(m->verts_tag, R3_NORMAL));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+   	glDrawElements(GL_TRIANGLES, 1 + end_idx - start_idx, GL_UNSIGNED_SHORT,
+		(void*)(sizeof(GLushort) * start_idx));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableVertexAttribArray(sh_pcn.a_position);
+	glDisableVertexAttribArray(sh_pcn.a_normal);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+void r3_render_pcn(const r3_mesh_t *m,
+        m4f mvp, const r3_normal_t *n)
+{
+        r3_render_range_pcn(m, 0, m->num_indices - 1, mvp, n);
+}
 
-void r3_render_pct(const r3_mesh_t *m, m4f mvp, unsigned int tex)
+void r3_render_range_pct(const r3_mesh_t *m,
+        int start_idx, int end_idx,
+        m4f mvp, unsigned int tex)
 {
 	const enum r3_verts_tag vt = m->verts_tag;
 	glUseProgram(sh_pct.program);
@@ -866,12 +903,13 @@ void r3_render_pct(const r3_mesh_t *m, m4f mvp, unsigned int tex)
         GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
 	glEnableVertexAttribArray(sh_pct.a_color);
 	glVertexAttribPointer(sh_pct.a_color, 3, GL_FLOAT, GL_FALSE,
-        r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_COLOR));
+                r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_COLOR));
 	glEnableVertexAttribArray(sh_pct.a_texcoord);
 	glVertexAttribPointer(sh_pct.a_texcoord, 3, GL_FLOAT, GL_FALSE,
-        r3_verts_tag_sizeof(vt), (void*)r3_offset(vt, R3_TEXCOORD));
+                r3_verts_tag_sizeof(vt), (void*)r3_offset(vt, R3_TEXCOORD));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+   	glDrawElements(GL_TRIANGLES, 1 + end_idx - start_idx, GL_UNSIGNED_SHORT,
+		(void*)(sizeof(GLushort) * start_idx));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh_pct.a_position);
 	glDisableVertexAttribArray(sh_pct.a_color);
@@ -879,7 +917,15 @@ void r3_render_pct(const r3_mesh_t *m, m4f mvp, unsigned int tex)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_pnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned int tex)
+void r3_render_pct(const r3_mesh_t *m,
+        m4f mvp, unsigned int tex)
+{
+        r3_render_range_pct(m, 0, m->num_indices - 1, mvp, tex);
+}
+
+void r3_render_range_pnt(const r3_mesh_t *m,
+        int start_idx, int end_idx,
+        m4f mvp, const r3_normal_t *n, unsigned int tex)
 {
 	const enum r3_verts_tag vt = m->verts_tag;
 	glUseProgram(sh_pcnt.program);
@@ -906,15 +952,24 @@ void r3_render_pnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned i
 	glVertexAttribPointer(sh_pcnt.a_texcoord, 3, GL_FLOAT, GL_FALSE,
         r3_verts_tag_sizeof(vt), (void*)r3_offset(vt, R3_TEXCOORD));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+       	glDrawElements(GL_TRIANGLES, 1 + end_idx - start_idx, GL_UNSIGNED_SHORT,
+                (void*)(sizeof(GLushort) * start_idx));
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh_pcnt.a_position);
 	glDisableVertexAttribArray(sh_pcnt.a_normal);
 	glDisableVertexAttribArray(sh_pcnt.a_texcoord);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_pcnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned int tex)
+void r3_render_pnt(const r3_mesh_t *m,
+        m4f mvp, const r3_normal_t *n, unsigned int tex)
+{
+        r3_render_range_pnt(m, 0, m->num_indices - 1, mvp, n, tex);
+}
+
+void r3_render_range_pcnt(const r3_mesh_t *m,
+        int start_idx, int end_idx,
+        m4f mvp, const r3_normal_t *n, unsigned int tex)
 {
 	const enum r3_verts_tag vt = m->verts_tag;
 	glUseProgram(sh_pcnt.program);
@@ -932,15 +987,20 @@ void r3_render_pcnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned 
 	// VBO & IBO 
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
 	glEnableVertexAttribArray(sh_pcnt.a_position);
-	glVertexAttribPointer(sh_pcnt.a_position, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
+	glVertexAttribPointer(sh_pcnt.a_position, 3, GL_FLOAT, GL_FALSE,
+                r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_POSITION));
 	glEnableVertexAttribArray(sh_pcnt.a_color);
-	glVertexAttribPointer(sh_pcnt.a_color, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_COLOR));
+	glVertexAttribPointer(sh_pcnt.a_color, 3, GL_FLOAT, GL_FALSE,
+                r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_COLOR));
 	glEnableVertexAttribArray(sh_pcnt.a_normal);
-	glVertexAttribPointer(sh_pcnt.a_normal, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_NORMAL));
+	glVertexAttribPointer(sh_pcnt.a_normal, 3, GL_FLOAT, GL_FALSE,
+                r3_verts_tag_sizeof(vt), r3_offset_ptr(vt, R3_NORMAL));
 	glEnableVertexAttribArray(sh_pcnt.a_texcoord);
-	glVertexAttribPointer(sh_pcnt.a_texcoord, 3, GL_FLOAT, GL_FALSE, r3_verts_tag_sizeof(vt), (void*)r3_offset(vt, R3_TEXCOORD));
+	glVertexAttribPointer(sh_pcnt.a_texcoord, 3, GL_FLOAT, GL_FALSE,
+                r3_verts_tag_sizeof(vt), (void*)r3_offset(vt, R3_TEXCOORD));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_SHORT, NULL);
+       	glDrawElements(GL_TRIANGLES, 1 + end_idx - start_idx, GL_UNSIGNED_SHORT,
+                (void*)(sizeof(GLushort) * start_idx));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(sh_pcnt.a_position);
 	glDisableVertexAttribArray(sh_pcnt.a_color);
@@ -948,6 +1008,12 @@ void r3_render_pcnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *n, unsigned 
 	glDisableVertexAttribArray(sh_pcnt.a_texcoord);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+}
+
+void r3_render_pcnt(const r3_mesh_t *m,
+        m4f mvp, const r3_normal_t *n, unsigned int tex)
+{
+        r3_render_range_pcnt(m, 0, m->num_indices - 1, mvp, n, tex);
 }
 
 void r3_blit_alpha_render(const struct r3_mesh *m, unsigned int tex, float alpha)
