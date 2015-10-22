@@ -25,7 +25,7 @@ enum r3_vert {
 
 typedef enum r3_vert r3_vert_t;
 
-struct r3_pc {
+typedef struct r3_c {
 	union {
 		struct {
 			v3f position;
@@ -33,11 +33,9 @@ struct r3_pc {
 		};
 		float val[6];
 	};
-};
+} r3_c_t;
 
-typedef struct r3_pc r3_pc_t;
-
-struct r3_pn {
+typedef struct r3_n {
 	union {
 		struct {
 			v3f position;
@@ -45,11 +43,9 @@ struct r3_pn {
 		};
 		float val[6];
 	};
-};
+} r3_n_t;
 
-typedef struct r3_pn r3_pn_t;
-
-struct r3_pcn {
+typedef struct r3_cn {
 	union {
 		struct {
 			v3f position;
@@ -58,11 +54,9 @@ struct r3_pcn {
 		};
 		float val[9];
 	};
-};
+} r3_cn_t;
 
-typedef struct r3_pcn r3_pcn_t;
-
-struct r3_pt {
+typedef struct r3_t {
 	union {
 		struct {
 			v3f position;
@@ -70,11 +64,9 @@ struct r3_pt {
 		};
 		float val[5];
 	};
-};
+} r3_t_t;
 
-typedef struct r3_pt r3_pt_t;
-
-struct r3_pnt {
+typedef struct r3_nt {
 	union {
 		struct {
 			v3f position;
@@ -83,11 +75,9 @@ struct r3_pnt {
 		};
 		float val[8];
 	};
-};
+} r3_nt_t;
 
-typedef struct r3_pnt r3_pnt_t;
-
-struct r3_pcnt {
+typedef struct r3_cnt {
 	union {
 		struct {
 			v3f position;
@@ -97,17 +87,15 @@ struct r3_pcnt {
 		};
 		float val[11];
 	};
-};
-
-typedef struct r3_pcnt r3_pcnt_t;
+} r3_cnt_t;
 
 enum r3_verts_tag {
-	R3_VERTS_PC,
-	R3_VERTS_PN,
-	R3_VERTS_PT,
-	R3_VERTS_PCN,
-	R3_VERTS_PNT,
-	R3_VERTS_PCNT,
+	R3_VERTS_C,
+	R3_VERTS_N,
+	R3_VERTS_T,
+	R3_VERTS_CN,
+	R3_VERTS_NT,
+	R3_VERTS_CNT,
 };
 
 typedef enum r3_verts_tag r3_verts_tag_t;
@@ -116,12 +104,12 @@ struct r3_verts {
 	enum r3_verts_tag tag;
 	union {
 		float *data;
-		struct r3_pc *pc;
-		struct r3_pn *pn;
-		struct r3_pcn *pcn;
-		struct r3_pt *pt;
-		struct r3_pnt *pnt;
-		struct r3_pcnt *pcnt;
+		struct r3_c *c;
+		struct r3_n *n;
+		struct r3_cn *cn;
+		struct r3_t *t;
+		struct r3_nt *nt;
+		struct r3_cnt *cnt;
 	};
 	unsigned int len;
 };
@@ -183,21 +171,21 @@ void r3_make_mesh_from_spec(const r3_spec_t *spec, r3_mesh_t *m);
 const r3_mesh_t *r3_cube_mesh();
 const r3_mesh_t *r3_quad_mesh();
 
-void r3_render_range_pc(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp);
-void r3_render_range_pn(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
-void r3_render_range_pcn(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
-void r3_render_range_pt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
-void r3_render_range_pct(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
-void r3_render_range_pnt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
-void r3_render_range_pcnt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_range_c(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp);
+void r3_render_range_n(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
+void r3_render_range_cn(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
+void r3_render_range_t(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
+void r3_render_range_ct(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
+void r3_render_range_nt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_range_cnt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
 
-void r3_render_pc(const r3_mesh_t *m, m4f mvp);
-void r3_render_pn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
-void r3_render_pcn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
-void r3_render_pt(const r3_mesh_t *m, m4f mvp, unsigned int tex);
-void r3_render_pct(const r3_mesh_t *m, m4f mvp, unsigned int tex);
-void r3_render_pnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
-void r3_render_pcnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_c(const r3_mesh_t *m, m4f mvp);
+void r3_render_n(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
+void r3_render_cn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
+void r3_render_t(const r3_mesh_t *m, m4f mvp, unsigned int tex);
+void r3_render_ct(const r3_mesh_t *m, m4f mvp, unsigned int tex);
+void r3_render_nt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_cnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
 
 void r3_render_blit_alpha(const r3_mesh_t *m,  unsigned int tex, float alpha);
 void r3_render_blit(const r3_mesh_t *m,  unsigned int tex);

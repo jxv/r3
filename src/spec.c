@@ -132,17 +132,17 @@ struct r3_spec *r3_create_cuboid_spec() {
 		20, 22, 21
 	};
 
-	char *buf = malloc(sizeof(struct r3_spec) + 24 * sizeof(struct r3_pcnt) + 36 * sizeof(unsigned short int));
+	char *buf = malloc(sizeof(r3_spec_t) + 24 * sizeof(r3_cnt_t) + 36 * sizeof(unsigned short int));
 	struct r3_spec *spec = (void*)buf;
-	spec->verts.tag = R3_VERTS_PCNT;
+	spec->verts.tag = R3_VERTS_CNT;
 	spec->verts.len = 24;
 	spec->verts.data = (void*) (sizeof(struct r3_spec) + buf);
 	spec->indices.tag = R3_INDICES_USHORT;
 	spec->indices.len = 36;
-	spec->indices.data = (void*)(24 * sizeof(struct r3_pcnt) + sizeof(struct r3_spec) + buf);
+	spec->indices.data = (void*)(24 * sizeof(r3_cnt_t) + sizeof(struct r3_spec) + buf);
 
 	for (int i = 0; i < 24; i++) {
-		spec->verts.pcnt[i] = (struct r3_pcnt) {
+		spec->verts.cnt[i] = (r3_cnt_t) {
 			.position = _v3f(positions[i*3+0], positions[i*3+1], positions[i*3+2]),
 			.color = _v3f(colors[i*3+0], colors[i*3+1], colors[i*3+2]),
 			.normal = _v3f(normals[i*3+0], normals[i*3+1], normals[i*3+2]),

@@ -51,13 +51,13 @@ int main()
                 r3_clear(_v3f(.2,.3,.3), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 switch (mode) {
-                case 0: r3_render_pc(r3_cube_mesh(), mvp); break;
-                case 1: r3_render_pn(r3_cube_mesh(), mvp, &normal); break;
-                case 2: r3_render_pt(r3_cube_mesh(), mvp, tex); break;
-                case 3: r3_render_pcn(r3_cube_mesh(), mvp, &normal); break;
-                case 4: r3_render_pct(r3_cube_mesh(), mvp, tex); break;
-                case 5: r3_render_pnt(r3_cube_mesh(), mvp, &normal, tex); break;
-                case 6: r3_render_pcnt(r3_cube_mesh(), mvp, &normal, tex); break;
+                case 0: r3_render_c(r3_cube_mesh(), mvp); break;
+                case 1: r3_render_n(r3_cube_mesh(), mvp, &normal); break;
+                case 2: r3_render_t(r3_cube_mesh(), mvp, tex); break;
+                case 3: r3_render_cn(r3_cube_mesh(), mvp, &normal); break;
+                case 4: r3_render_ct(r3_cube_mesh(), mvp, tex); break;
+                case 5: r3_render_nt(r3_cube_mesh(), mvp, &normal, tex); break;
+                case 6: r3_render_cnt(r3_cube_mesh(), mvp, &normal, tex); break;
                 default: break;
                 }
                 r3_render();
