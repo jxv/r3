@@ -1,4 +1,5 @@
 #r3
+![Logo](https://raw.githubusercontent.com/jxv/r3/master/r3.png)
 
 ##Cube Demo
 
