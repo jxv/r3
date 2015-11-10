@@ -84,7 +84,7 @@ bool r3_init(const char *title, v2i dim)
     r3_sdl_set_gl_attributes();
     if (!(window = r3_sdl_create_window(title, dim.x, dim.y))) return false;
     if (!r3_sdl_create_gl_context()) {
-    SDL_DestroyWindow(window);
+        SDL_DestroyWindow(window);
         return false;
     }
     window_dim = dim;
@@ -465,11 +465,6 @@ void r3_clear(v3f color, unsigned int clear_bits)
 	glClear(clear_bits);
 }
 
-//void r3_render(struct r3_ren *ren)
-//{
-// ren->render(ren);
-//}
-
 void r3_viewport()
 {
 	glViewport(0, 0, window_dim.x, window_dim.y);
@@ -480,11 +475,6 @@ void  r3_enable_tests()
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 }
-
-//void r3_quit(struct r3_ren *ren)
-//{
-//	ren->quit(ren);
-//}
 
 char *r3_load_file(const char *path)
 {
