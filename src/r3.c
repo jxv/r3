@@ -125,7 +125,7 @@ struct {
   GLint u_sample;
 } sh_cell;
 
-void make_sh_cell()
+static void make_sh_cell()
 {
   SETUP_PROGRAM(cell)
   ATTRIB_LOC(cell, a_position)
@@ -150,7 +150,7 @@ struct {
 	GLint u_mvp;
 } sh_c;
 
-void make_sh_c()
+static void make_sh_c()
 {
   SETUP_PROGRAM(c)
   ATTRIB_LOC(c, a_position)
@@ -174,7 +174,7 @@ struct {
   GLint u_sample;
 } sh_n;
 
-void make_sh_n()
+static void make_sh_n()
 {
   SETUP_PROGRAM(n)
   ATTRIB_LOC(n, a_position)
@@ -200,7 +200,7 @@ struct {
   GLint u_sample;
 } sh_t;
 
-void make_sh_t()
+static void make_sh_t()
 {
   SETUP_PROGRAM(t)
   ATTRIB_LOC(t, a_position)
@@ -225,7 +225,7 @@ struct {
   GLint u_shininess;
 } sh_cn;
 
-void make_sh_cn()
+static void make_sh_cn()
 {
   SETUP_PROGRAM(cn)
   ATTRIB_LOC(cn, a_position)
@@ -251,7 +251,7 @@ struct {
 	GLint u_sample;
 } sh_ct;
 
-void make_sh_ct()
+static void make_sh_ct()
 {
   SETUP_PROGRAM(ct)
   ATTRIB_LOC(ct, a_position)
@@ -278,7 +278,7 @@ struct {
 	GLint u_sample;
 } sh_nt;
 
-void make_sh_nt()
+static void make_sh_nt()
 {
   SETUP_PROGRAM(nt)
   ATTRIB_LOC(nt, a_position)
@@ -311,7 +311,7 @@ struct {
 	GLint u_sample;
 } sh_cnt;
 
-void make_sh_cnt()
+static void make_sh_cnt()
 {
   SETUP_PROGRAM(cnt)
   ATTRIB_LOC(cnt, a_position)
@@ -337,7 +337,7 @@ struct {
 	GLint u_sample;
 } sh_blit;
 
-void make_sh_blit()
+static void make_sh_blit()
 {
   SETUP_PROGRAM(blit)
   ATTRIB_LOC(blit, a_position)
@@ -356,7 +356,7 @@ struct {
 	GLint u_alpha;
 } sh_blit_alpha;
 
-void make_sh_blit_alpha()
+static void make_sh_blit_alpha()
 {
   SETUP_PROGRAM(blit_alpha)
   ATTRIB_LOC(blit_alpha, a_position)
@@ -377,7 +377,7 @@ struct {
 	GLint u_offset;
 } sh_gaussian;
 
-void make_sh_gaussian()
+static void make_sh_gaussian()
 {
   SETUP_PROGRAM(gaussian)
   ATTRIB_LOC(gaussian, a_position)
@@ -401,7 +401,7 @@ struct {
 	GLint u_threshold;
 } sh_high_pass;
 
-void make_sh_high_pass()
+static void make_sh_high_pass()
 {
   SETUP_PROGRAM(high_pass)
   ATTRIB_LOC(high_pass, a_position)
@@ -428,7 +428,7 @@ struct {
 	GLint u_shininess;
 } sh_light;
 
-void make_sh_light()
+static void make_sh_light()
 {
   SETUP_PROGRAM(light)
   ATTRIB_LOC(light, a_position)
