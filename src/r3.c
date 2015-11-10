@@ -125,7 +125,7 @@ struct {
   GLint u_sample;
 } sh_cell;
 
-void r3_make_cell_shader()
+void make_sh_cell()
 {
   SETUP_PROGRAM(cell)
   ATTRIB_LOC(cell, a_position)
@@ -150,7 +150,7 @@ struct {
 	GLint u_mvp;
 } sh_c;
 
-void r3_make_c_shader()
+void make_sh_c()
 {
   SETUP_PROGRAM(c)
   ATTRIB_LOC(c, a_position)
@@ -174,7 +174,7 @@ struct {
   GLint u_sample;
 } sh_n;
 
-void r3_make_n_shader()
+void make_sh_n()
 {
   SETUP_PROGRAM(n)
   ATTRIB_LOC(n, a_position)
@@ -200,7 +200,7 @@ struct {
   GLint u_sample;
 } sh_t;
 
-void r3_make_t_shader()
+void make_sh_t()
 {
   SETUP_PROGRAM(t)
   ATTRIB_LOC(t, a_position)
@@ -225,7 +225,7 @@ struct {
   GLint u_shininess;
 } sh_cn;
 
-void r3_make_cn_shader()
+void make_sh_cn()
 {
   SETUP_PROGRAM(cn)
   ATTRIB_LOC(cn, a_position)
@@ -251,7 +251,7 @@ struct {
 	GLint u_sample;
 } sh_ct;
 
-void r3_make_ct_shader()
+void make_sh_ct()
 {
   SETUP_PROGRAM(ct)
   ATTRIB_LOC(ct, a_position)
@@ -278,7 +278,7 @@ struct {
 	GLint u_sample;
 } sh_nt;
 
-void r3_make_nt_shader()
+void make_sh_nt()
 {
   SETUP_PROGRAM(nt)
   ATTRIB_LOC(nt, a_position)
@@ -311,7 +311,7 @@ struct {
 	GLint u_sample;
 } sh_cnt;
 
-void r3_make_cnt_shader()
+void make_sh_cnt()
 {
   SETUP_PROGRAM(cnt)
   ATTRIB_LOC(cnt, a_position)
@@ -337,7 +337,7 @@ struct {
 	GLint u_sample;
 } sh_blit;
 
-void r3_make_blit_shader()
+void make_sh_blit()
 {
   SETUP_PROGRAM(blit)
   ATTRIB_LOC(blit, a_position)
@@ -356,7 +356,7 @@ struct {
 	GLint u_alpha;
 } sh_blit_alpha;
 
-void r3_make_blit_alpha_shader()
+void make_sh_blit_alpha()
 {
   SETUP_PROGRAM(blit_alpha)
   ATTRIB_LOC(blit_alpha, a_position)
@@ -377,7 +377,7 @@ struct {
 	GLint u_offset;
 } sh_gaussian;
 
-void r3_make_gaussian_shader()
+void make_sh_gaussian()
 {
   SETUP_PROGRAM(gaussian)
   ATTRIB_LOC(gaussian, a_position)
@@ -401,7 +401,7 @@ struct {
 	GLint u_threshold;
 } sh_high_pass;
 
-void r3_make_high_pass_shader()
+void make_sh_high_pass()
 {
   SETUP_PROGRAM(high_pass)
   ATTRIB_LOC(high_pass, a_position)
@@ -428,7 +428,7 @@ struct {
 	GLint u_shininess;
 } sh_light;
 
-void r3_make_light_shader()
+void make_sh_light()
 {
   SETUP_PROGRAM(light)
   ATTRIB_LOC(light, a_position)
@@ -441,22 +441,20 @@ void r3_make_light_shader()
   UNIFORM_LOC(light, u_shininess)
 }
 
-void r3_load_shaders()
-{
-
-  r3_make_cell_shader();
-  r3_make_c_shader();
-  r3_make_n_shader();
-  r3_make_t_shader();
-  r3_make_cn_shader();
-  r3_make_ct_shader();
-  r3_make_nt_shader();
-  r3_make_cnt_shader();
-  r3_make_blit_shader();
-  r3_make_blit_alpha_shader();
-  r3_make_gaussian_shader();
-  r3_make_high_pass_shader();
-  r3_make_light_shader();
+void r3_load_shaders() {
+    make_sh_cell();
+    make_sh_c();
+    make_sh_n();
+    make_sh_t();
+    make_sh_cn();
+    make_sh_ct();
+    make_sh_nt();
+    make_sh_cnt();
+    make_sh_blit();
+    make_sh_blit_alpha();
+    make_sh_gaussian();
+    make_sh_high_pass();
+    make_sh_light();
 }
 
 void r3_clear(v3f color, unsigned int clear_bits)
@@ -1143,7 +1141,7 @@ unsigned int r3_load_tga_texture(const char *path)
 	return 0;
 }
 
-void r3_break_mesh(const struct r3_mesh *m)
+void r3_remove_mesh(const struct r3_mesh *m)
 {
 	glDeleteBuffers(1, &m->vbo);
 	glDeleteBuffers(1, &m->ibo);
@@ -1239,8 +1237,8 @@ const r3_mesh_t *r3_quad_mesh()
 
 void r3_quit()
 {
-    r3_break_mesh(&cube_mesh);
-    r3_break_mesh(&quad_mesh);
+    r3_remove_mesh(&cube_mesh);
+    r3_remove_mesh(&quad_mesh);
     glDeleteProgram(sh_cell.program);
     glDeleteProgram(sh_c.program);
     glDeleteProgram(sh_n.program);

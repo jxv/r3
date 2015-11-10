@@ -193,7 +193,7 @@ void r3_render_blur_width(const r3_mesh_t *m,  unsigned int tex, float aspect, f
 void r3_render_blur_height(const r3_mesh_t *m,  unsigned int tex, float aspect, float height);
 void r3_render_high_pass(const r3_mesh_t *m,  unsigned int tex);
 
-void r3_break_mesh(const r3_mesh_t *m);
+void r3_remove_mesh(const r3_mesh_t *m);
 
 ssize_t r3_verts_tag_sizeof(r3_verts_tag_t tag);
 ssize_t r3_verts_sizeof(const r3_verts_t *verts);
