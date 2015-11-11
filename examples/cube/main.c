@@ -25,6 +25,7 @@ int main()
         bool done = false;
         float angle = 0.f;
         int mode = 0;
+        const int modes = 11;
         while (!done) {
                 const int start_tick = SDL_GetTicks();
 
@@ -33,8 +34,8 @@ int main()
                         if (event.type == SDL_KEYDOWN) {
                             switch (event.key.keysym.sym) {
                             case SDLK_ESCAPE: done = true; break;
-                            case SDLK_LEFT: mode = (mode + 6) % 11; break;
-                            case SDLK_RIGHT: mode = (mode + 1) % 11; break;
+                            case SDLK_LEFT: mode = (mode + modes - 1) % modes; break;
+                            case SDLK_RIGHT: mode = (mode + 1) % modes; break;
                             default: break;
                             }
                         }
