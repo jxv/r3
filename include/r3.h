@@ -172,20 +172,28 @@ const r3_mesh_t *r3_cube_mesh();
 const r3_mesh_t *r3_quad_mesh();
 
 void r3_render_range_c(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp);
+void r3_render_range_k(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, v3f kolor);
 void r3_render_range_n(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
 void r3_render_range_cn(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
+void r3_render_range_kn(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, v3f kolor, const r3_normal_t *);
 void r3_render_range_t(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
 void r3_render_range_ct(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
+void r3_render_range_kt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, v3f kolor, unsigned int tex);
 void r3_render_range_nt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
 void r3_render_range_cnt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_range_knt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, v3f kolor, const r3_normal_t *, unsigned int tex);
 
 void r3_render_c(const r3_mesh_t *m, m4f mvp);
+void r3_render_k(const r3_mesh_t *m, m4f mvp, v3f kolor);
 void r3_render_n(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
 void r3_render_cn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
+void r3_render_kn(const r3_mesh_t *m, m4f mvp, v3f kolor, const r3_normal_t *);
 void r3_render_t(const r3_mesh_t *m, m4f mvp, unsigned int tex);
 void r3_render_ct(const r3_mesh_t *m, m4f mvp, unsigned int tex);
+void r3_render_kt(const r3_mesh_t *m, m4f mvp, v3f kolor, unsigned int tex);
 void r3_render_nt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
 void r3_render_cnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_knt(const r3_mesh_t *m, m4f mvp, v3f kolor, const r3_normal_t *, unsigned int tex);
 
 void r3_render_blit_alpha(const r3_mesh_t *m,  unsigned int tex, float alpha);
 void r3_render_blit(const r3_mesh_t *m,  unsigned int tex);

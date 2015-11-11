@@ -11,6 +11,7 @@ int main()
         r3_init("", _v2i(320, 240));
         const float dt = 1.f / 60.f;
         const float aspect = 320.f / 240.f;
+        const v3f kolor = _v3f(0.3, 0.9, 0.1);
 
         r3_normal_t normal = {
             .mv = eyem3f(),
@@ -32,8 +33,8 @@ int main()
                         if (event.type == SDL_KEYDOWN) {
                             switch (event.key.keysym.sym) {
                             case SDLK_ESCAPE: done = true; break;
-                            case SDLK_LEFT: mode = (mode + 6) % 7; break;
-                            case SDLK_RIGHT: mode = (mode + 1) % 7; break;
+                            case SDLK_LEFT: mode = (mode + 6) % 11; break;
+                            case SDLK_RIGHT: mode = (mode + 1) % 11; break;
                             default: break;
                             }
                         }
@@ -51,13 +52,17 @@ int main()
                 r3_clear(_v3f(.2,.3,.3), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 switch (mode) {
-                case 0: r3_render_c(r3_cube_mesh(), mvp); break;
-                case 1: r3_render_n(r3_cube_mesh(), mvp, &normal); break;
-                case 2: r3_render_t(r3_cube_mesh(), mvp, tex); break;
-                case 3: r3_render_cn(r3_cube_mesh(), mvp, &normal); break;
-                case 4: r3_render_ct(r3_cube_mesh(), mvp, tex); break;
-                case 5: r3_render_nt(r3_cube_mesh(), mvp, &normal, tex); break;
-                case 6: r3_render_cnt(r3_cube_mesh(), mvp, &normal, tex); break;
+                case 0: r3_render_k(r3_cube_mesh(), mvp, kolor); break;
+                case 1: r3_render_c(r3_cube_mesh(), mvp); break;
+                case 2: r3_render_n(r3_cube_mesh(), mvp, &normal); break;
+                case 3: r3_render_t(r3_cube_mesh(), mvp, tex); break;
+                case 4: r3_render_kn(r3_cube_mesh(), mvp, kolor, &normal); break;
+                case 5: r3_render_cn(r3_cube_mesh(), mvp, &normal); break;
+                case 6: r3_render_kt(r3_cube_mesh(), mvp, kolor, tex); break;
+                case 7: r3_render_ct(r3_cube_mesh(), mvp, tex); break;
+                case 8: r3_render_nt(r3_cube_mesh(), mvp, &normal, tex); break;
+                case 9: r3_render_knt(r3_cube_mesh(), mvp, kolor, &normal, tex); break;
+                case 10: r3_render_cnt(r3_cube_mesh(), mvp, &normal, tex); break;
                 default: break;
                 }
                 r3_render();
