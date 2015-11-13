@@ -573,7 +573,7 @@ char *r3_load_file(const char *path) {
     return data;
 }
 
-char* r3_load_tga(const char *fileName, int *width, int *height) {
+char* r3_load_tga_bgr(const char *fileName, int *width, int *height) {
     char *buf = NULL;
     FILE *f;
     unsigned char tgaheader[12];
@@ -607,6 +607,49 @@ char* r3_load_tga(const char *fileName, int *width, int *height) {
         return NULL;
     }
     fclose(f);
+    return buf;
+}
+
+char* r3_load_tga_rgb(const char *fileName, int *width, int *height) {
+    char *buf = NULL;
+    FILE *f;
+    unsigned char tgaheader[12];
+    unsigned char attributes[6];
+    unsigned int imagesize;
+    f = fopen(fileName, "rb");
+    if (f == NULL) {
+        return NULL;
+    }
+    if (tgaheader[2] == 2) {
+        return NULL; // compression not supported
+    }
+    if (fread(&tgaheader, sizeof(tgaheader), 1, f) == 0) {
+        fclose(f);
+        return NULL;
+    }
+    if (fread(attributes, sizeof(attributes), 1, f) == 0) {
+        fclose(f);
+        return 0;
+    }
+    *width = attributes[1] * 256 + attributes[0];
+    *height = attributes[3] * 256 + attributes[2];
+    imagesize = attributes[4] / 8 * *width * *height;
+    buf = malloc(imagesize);
+    if (buf == NULL) {
+        fclose(f);
+        return 0;
+    }
+    if (fread(buf, 1, imagesize, f) != imagesize) {
+        free(buf);
+        return NULL;
+    }
+    fclose(f);
+    for (unsigned int i = 0; i < imagesize; i += 3) {
+        const char b = buf[i];
+        const char r = buf[i+2];
+        buf[i] = r;
+        buf[i+2] = b;
+    }
     return buf;
 }
 
@@ -1310,18 +1353,34 @@ void render_light(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv, m
 }
 */
 
-unsigned int r3_load_tga_texture(const char *path) {
+unsigned int load_texture(char *data, int width, int height) {
+    unsigned int tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    return tex;
+}
+
+unsigned int r3_load_tga_rgb_texture(const char *path) {
     int width, height;
-    char *data = r3_load_tga(path, &width, &height);
+    char *data = r3_load_tga_rgb(path, &width, &height);
     if (data) {
-        unsigned int tex;
-        glGenTextures(1, &tex);
-        glBindTexture(GL_TEXTURE_2D, tex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        unsigned int tex = load_texture(data, width, height);
+        free(data);
+        return tex;
+    }
+    return 0;
+}
+
+unsigned int r3_load_tga_bgr_texture(const char *path) {
+    int width, height;
+    char *data = r3_load_tga_bgr(path, &width, &height);
+    if (data) {
+        unsigned int tex = load_texture(data, width, height);
         free(data);
         return tex;
     }

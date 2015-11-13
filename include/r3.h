@@ -157,8 +157,10 @@ void r3_render();
 void r3_quit();
 
 // AUX API
-unsigned int r3_load_tga_texture(const char *path);
-char* r3_load_tga(const char *fileName, int *width, int *height);
+unsigned int r3_load_tga_bgr_texture(const char *path);
+unsigned int r3_load_tga_rgb_texture(const char *path);
+char* r3_load_tga_bgr(const char *fileName, int *width, int *height);
+char* r3_load_tga_rgb(const char *fileName, int *width, int *height);
 
 //
 

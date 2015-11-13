@@ -20,7 +20,7 @@ int main()
             .diffuse_color = _v3f(1, 1, 1),
             .shininess = 100,
         };
-        const unsigned int tex = r3_load_tga_texture("r3.tga");
+        const unsigned int tex = r3_load_tga_rgb_texture("r3.tga");
 
         bool done = false;
         float angle = 0.f;
