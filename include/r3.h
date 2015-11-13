@@ -17,150 +17,144 @@ char* r3_load_tga(const char *fileName, int *width, int *height);
 //
 
 enum r3_vert {
-	R3_POSITION,
-	R3_COLOR,
-	R3_NORMAL,
-	R3_TEXCOORD,
+    R3_POSITION,
+    R3_COLOR,
+    R3_NORMAL,
+    R3_TEXCOORD,
 };
 
 typedef enum r3_vert r3_vert_t;
 
 typedef struct r3_c {
-	union {
-		struct {
-			v3f position;
-			v3f color;
-		};
-		float val[6];
-	};
+    union {
+        struct {
+            v3f position;
+            v3f color;
+        };
+        float val[6];
+    };
 } r3_c_t;
 
 typedef struct r3_n {
-	union {
-		struct {
-			v3f position;
-			v3f normal;
-		};
-		float val[6];
-	};
+    union {
+        struct {
+            v3f position;
+            v3f normal;
+        };
+        float val[6];
+    };
 } r3_n_t;
 
 typedef struct r3_cn {
-	union {
-		struct {
-			v3f position;
-			v3f color;
-			v3f normal;
-		};
-		float val[9];
-	};
+    union {
+        struct {
+            v3f position;
+            v3f color;
+            v3f normal;
+        };
+        float val[9];
+    };
 } r3_cn_t;
 
 typedef struct r3_t {
-	union {
-		struct {
-			v3f position;
-			v2f texcoord;	
-		};
-		float val[5];
-	};
+    union {
+        struct {
+            v3f position;
+            v2f texcoord;    
+        };
+        float val[5];
+    };
 } r3_t_t;
 
 typedef struct r3_nt {
-	union {
-		struct {
-			v3f position;
-			v3f normal;
-			v2f texcoord;
-		};
-		float val[8];
-	};
+    union {
+        struct {
+            v3f position;
+            v3f normal;
+            v2f texcoord;
+        };
+        float val[8];
+    };
 } r3_nt_t;
 
 typedef struct r3_cnt {
-	union {
-		struct {
-			v3f position;
-			v3f color;
-			v3f normal;
-			v2f texcoord;
-		};
-		float val[11];
-	};
+    union {
+        struct {
+            v3f position;
+            v3f color;
+            v3f normal;
+            v2f texcoord;
+        };
+        float val[11];
+    };
 } r3_cnt_t;
 
 enum r3_verts_tag {
-	R3_VERTS_C,
-	R3_VERTS_N,
-	R3_VERTS_T,
-	R3_VERTS_CN,
-	R3_VERTS_NT,
-	R3_VERTS_CNT,
+    R3_VERTS_C,
+    R3_VERTS_N,
+    R3_VERTS_T,
+    R3_VERTS_CN,
+    R3_VERTS_NT,
+    R3_VERTS_CNT,
 };
 
 typedef enum r3_verts_tag r3_verts_tag_t;
 
 struct r3_verts {
-	enum r3_verts_tag tag;
-	union {
-		float *data;
-		struct r3_c *c;
-		struct r3_n *n;
-		struct r3_cn *cn;
-		struct r3_t *t;
-		struct r3_nt *nt;
-		struct r3_cnt *cnt;
-	};
-	unsigned int len;
+    enum r3_verts_tag tag;
+    union {
+        float *data;
+        struct r3_c *c;
+        struct r3_n *n;
+        struct r3_cn *cn;
+        struct r3_t *t;
+        struct r3_nt *nt;
+        struct r3_cnt *cnt;
+    };
+    unsigned int len;
 };
 
 typedef struct r3_verts r3_verts_t;
 
 enum r3_indices_tag {
-	R3_INDICES_USHORT,
-	R3_INDICES_UINT,
+    R3_INDICES_USHORT,
+    R3_INDICES_UINT,
 };
 
 typedef enum r3_indices_tag r3_indices_tag_t;
 
 struct r3_indices {
-	enum r3_indices_tag tag;
-	union {
-		void *data;
-		unsigned short int *ushort;
-		unsigned int *uint;
-	};
-	unsigned int len;
+    enum r3_indices_tag tag;
+    union {
+        void *data;
+        unsigned short int *ushort;
+        unsigned int *uint;
+    };
+    unsigned int len;
 };
 
 typedef struct r3_indices r3_indices_t;
 
-struct r3_spec {
-	struct r3_verts verts;
-	struct r3_indices indices;
-};
+typedef struct r3_spec {
+    struct r3_verts verts;
+    struct r3_indices indices;
+} r3_spec_t;
 
-typedef struct r3_spec r3_spec_t;
+typedef struct r3_mesh {
+    enum r3_verts_tag verts_tag;
+    unsigned int vbo;
+    unsigned int ibo;
+    unsigned int num_indices;
+} r3_mesh_t;
 
-struct r3_mesh {
-	enum r3_verts_tag verts_tag;
-	unsigned int vbo;
-	unsigned int ibo;
-	unsigned int num_indices;
-};
-
-typedef struct r3_mesh r3_mesh_t;
-
-struct r3_normal {
+typedef struct r3_normal {
     m3f mv;
     v3f light_position;
     v3f ambient_color;
     v3f diffuse_color;
     v3f specular_color;
     float shininess;
-};
-
-typedef struct r3_normal r3_normal_t;
+} r3_normal_t;
 
 void r3_viewport();
 void r3_enable_tests();
