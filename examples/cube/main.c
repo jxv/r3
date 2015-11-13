@@ -50,7 +50,7 @@ int main()
                 normal.mv = m3m4f(mv);
 
                 r3_viewport();
-                r3_clear(_v3f(.2,.3,.3), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                r3_clear(_v3f(.2,.3,.3), R3_CLEAR_BIT_COLOR | R3_CLEAR_BIT_DEPTH);
 
                 switch (mode) {
                 case 0: r3_render_k(r3_cube_mesh(), mvp, kolor); break;

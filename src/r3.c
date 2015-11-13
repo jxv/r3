@@ -545,9 +545,9 @@ void r3_load_shaders() {
     make_sh_light();
 }
 
-void r3_clear(v3f color, unsigned int clear_bits) {
+void r3_clear(v3f color, r3_clear_bit_t bits) {
     glClearColor(color.x, color.y, color.z, 1);
-    glClear(clear_bits);
+    glClear(bits);
 }
 
 void r3_viewport() {

@@ -5,25 +5,18 @@
 #include <stdlib.h>
 #include <GLES2/gl2.h>
 
-bool r3_init(const char *title, v2i dim);
-void r3_clear(v3f color, unsigned int clear_bits);
-void r3_render();
-void r3_quit();
+typedef enum r3_clear_bit {
+    R3_CLEAR_BIT_COLOR = GL_COLOR_BUFFER_BIT,
+    R3_CLEAR_BIT_DEPTH = GL_DEPTH_BUFFER_BIT,
+    R3_CLEAR_BIT_STENCIL = GL_STENCIL_BUFFER_BIT,
+} r3_clear_bit_t;
 
-// AUX API
-unsigned int r3_load_tga_texture(const char *path);
-char* r3_load_tga(const char *fileName, int *width, int *height);
-
-//
-
-enum r3_vert {
+typedef enum r3_vert {
     R3_POSITION,
     R3_COLOR,
     R3_NORMAL,
     R3_TEXCOORD,
-};
-
-typedef enum r3_vert r3_vert_t;
+} r3_vert_t;
 
 typedef struct r3_c {
     union {
@@ -155,6 +148,19 @@ typedef struct r3_normal {
     v3f specular_color;
     float shininess;
 } r3_normal_t;
+
+//
+
+bool r3_init(const char *title, v2i dim);
+void r3_clear(v3f color, r3_clear_bit_t bits);
+void r3_render();
+void r3_quit();
+
+// AUX API
+unsigned int r3_load_tga_texture(const char *path);
+char* r3_load_tga(const char *fileName, int *width, int *height);
+
+//
 
 void r3_viewport();
 void r3_enable_tests();
