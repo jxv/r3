@@ -545,8 +545,8 @@ void r3_load_shaders() {
     make_sh_light();
 }
 
-void r3_clear(v3f color, r3_clear_bit_t bits) {
-    glClearColor(color.x, color.y, color.z, 1);
+void r3_clear(const v3f *color, r3_clear_bit_t bits) {
+    glClearColor(color->x, color->y, color->z, 1);
     glClear(bits);
 }
 
@@ -849,11 +849,11 @@ static void render_drawable(const struct r3_mesh *m, const struct r3_shader *sh,
 
 void r3_render_range_c(const r3_mesh_t *m, 
         int start_idx, int end_idx,
-        m4f mvp) {
+        const m4f *mvp) {
     const enum r3_verts_tag vt = m->verts_tag;
     glUseProgram(sh_c.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_c.u_mvp, 1, GL_FALSE, mvp.val);
+    glUniformMatrix4fv(sh_c.u_mvp, 1, GL_FALSE, mvp->val);
     // Set texture
     glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
     glEnableVertexAttribArray(sh_c.a_position);
@@ -872,18 +872,18 @@ void r3_render_range_c(const r3_mesh_t *m,
 }
 
 void r3_render_c(const r3_mesh_t *m,
-        m4f mvp) {
+        const m4f *mvp) {
     r3_render_range_c(m, 0, m->num_indices - 1, mvp);
 }
 
 void r3_render_range_k(const r3_mesh_t *m, 
         int start_idx, int end_idx,
-        m4f mvp, v3f kolor) {
+        const m4f *mvp, const v3f *kolor) {
     const enum r3_verts_tag vt = m->verts_tag;
     glUseProgram(sh_k.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_k.u_mvp, 1, GL_FALSE, mvp.val);
-    glUniform3fv(sh_k.u_kolor, 1, kolor.val);
+    glUniformMatrix4fv(sh_k.u_mvp, 1, GL_FALSE, mvp->val);
+    glUniform3fv(sh_k.u_kolor, 1, kolor->val);
     // Set texture
     glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
     glEnableVertexAttribArray(sh_k.a_position);
@@ -898,16 +898,16 @@ void r3_render_range_k(const r3_mesh_t *m,
 }
 
 void r3_render_k(const r3_mesh_t *m,
-        m4f mvp, v3f kolor) {
+        const m4f *mvp, const v3f *kolor) {
         r3_render_range_k(m, 0, m->num_indices - 1, mvp, kolor);
 }
 
 void r3_render_range_n(const r3_mesh_t *m,
         int start_idx, int end_idx,
-        m4f mvp, const r3_normal_t *n) {
+        const m4f *mvp, const r3_normal_t *n) {
     glUseProgram(sh_n.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_n.u_mvp, 1, GL_FALSE, mvp.val);
+    glUniformMatrix4fv(sh_n.u_mvp, 1, GL_FALSE, mvp->val);
     glUniformMatrix3fv(sh_n.u_normal, 1, 0, n->mv.val);
     glUniform3fv(sh_n.u_light_position, 1, n->light_position.val);
     glUniform3fv(sh_n.u_ambient, 1, n->ambient_color.val);
@@ -932,17 +932,17 @@ void r3_render_range_n(const r3_mesh_t *m,
 }
 
 void r3_render_n(const r3_mesh_t *m,
-        m4f mvp, const r3_normal_t *n) {
+        const m4f *mvp, const r3_normal_t *n) {
     r3_render_range_n(m, 0, m->num_indices - 1, mvp, n);
 }
 
 void r3_render_range_t(const r3_mesh_t *m,
         int start_idx, int end_idx,
-        m4f mvp, unsigned int tex) {
+        const m4f *mvp, unsigned int tex) {
     const enum r3_verts_tag vt = m->verts_tag;
     glUseProgram(sh_t.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_t.u_mvp, 1, GL_FALSE, mvp.val);
+    glUniformMatrix4fv(sh_t.u_mvp, 1, GL_FALSE, mvp->val);
     // Set texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -965,16 +965,16 @@ void r3_render_range_t(const r3_mesh_t *m,
 }
 
 void r3_render_t(const r3_mesh_t *m,
-        m4f mvp, unsigned int tex) {
+        const m4f *mvp, unsigned int tex) {
     r3_render_range_t(m, 0, m->num_indices - 1, mvp, tex);
 }
 
 void r3_render_range_cn(const r3_mesh_t *m,
         int start_idx, int end_idx,
-        m4f mvp, const r3_normal_t *n) {
+        const m4f *mvp, const r3_normal_t *n) {
     glUseProgram(sh_cn.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_cn.u_mvp, 1, GL_FALSE, mvp.val);
+    glUniformMatrix4fv(sh_cn.u_mvp, 1, GL_FALSE, mvp->val);
     glUniformMatrix3fv(sh_cn.u_normal, 1, 0, n->mv.val);
     glUniform3fv(sh_cn.u_light_position, 1, n->light_position.val);
     glUniform3fv(sh_cn.u_ambient, 1, n->ambient_color.val);
@@ -1001,17 +1001,17 @@ void r3_render_range_cn(const r3_mesh_t *m,
 }
 
 void r3_render_cn(const r3_mesh_t *m,
-        m4f mvp, const r3_normal_t *n) {
+        const m4f *mvp, const r3_normal_t *n) {
     r3_render_range_cn(m, 0, m->num_indices - 1, mvp, n);
 }
 
 void r3_render_range_kn(const r3_mesh_t *m,
         int start_idx, int end_idx,
-        m4f mvp, v3f kolor, const r3_normal_t *n) {
+        const m4f *mvp, const v3f *kolor, const r3_normal_t *n) {
     glUseProgram(sh_kn.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_kn.u_mvp, 1, GL_FALSE, mvp.val);
-    glUniform3fv(sh_kn.u_kolor, 1, kolor.val);
+    glUniformMatrix4fv(sh_kn.u_mvp, 1, GL_FALSE, mvp->val);
+    glUniform3fv(sh_kn.u_kolor, 1, kolor->val);
     glUniformMatrix3fv(sh_kn.u_normal, 1, 0, n->mv.val);
     glUniform3fv(sh_kn.u_light_position, 1, n->light_position.val);
     glUniform3fv(sh_kn.u_ambient, 1, n->ambient_color.val);
@@ -1035,18 +1035,18 @@ void r3_render_range_kn(const r3_mesh_t *m,
 }
 
 void r3_render_kn(const r3_mesh_t *m,
-        m4f mvp, v3f kolor, const r3_normal_t *n) {
+        const m4f *mvp, const v3f *kolor, const r3_normal_t *n) {
     r3_render_range_kn(m, 0, m->num_indices - 1, mvp, kolor, n);
 }
 
 
 void r3_render_range_ct(const r3_mesh_t *m,
         int start_idx, int end_idx,
-        m4f mvp, unsigned int tex) {
+        const m4f *mvp, unsigned int tex) {
     const enum r3_verts_tag vt = m->verts_tag;
     glUseProgram(sh_ct.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_ct.u_mvp, 1, GL_FALSE, mvp.val);
+    glUniformMatrix4fv(sh_ct.u_mvp, 1, GL_FALSE, mvp->val);
     // Set texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -1073,18 +1073,18 @@ void r3_render_range_ct(const r3_mesh_t *m,
 }
 
 void r3_render_ct(const r3_mesh_t *m,
-        m4f mvp, unsigned int tex) {
+        const m4f *mvp, unsigned int tex) {
     r3_render_range_ct(m, 0, m->num_indices - 1, mvp, tex);
 }
 
 void r3_render_range_kt(const r3_mesh_t *m,
         int start_idx, int end_idx,
-        m4f mvp, v3f kolor, unsigned int tex) {
+        const m4f *mvp, const v3f *kolor, unsigned int tex) {
     const enum r3_verts_tag vt = m->verts_tag;
     glUseProgram(sh_kt.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_kt.u_mvp, 1, GL_FALSE, mvp.val);
-    glUniform3fv(sh_kt.u_kolor, 1, kolor.val);
+    glUniformMatrix4fv(sh_kt.u_mvp, 1, GL_FALSE, mvp->val);
+    glUniform3fv(sh_kt.u_kolor, 1, kolor->val);
     // Set texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -1107,18 +1107,17 @@ void r3_render_range_kt(const r3_mesh_t *m,
 }
 
 void r3_render_kt(const r3_mesh_t *m,
-        m4f mvp, v3f kolor, unsigned int tex) {
+        const m4f *mvp, const v3f *kolor, unsigned int tex) {
     r3_render_range_kt(m, 0, m->num_indices - 1, mvp, kolor, tex);
 }
 
-
 void r3_render_range_nt(const r3_mesh_t *m,
         int start_idx, int end_idx,
-        m4f mvp, const r3_normal_t *n, unsigned int tex) {
+        const m4f *mvp, const r3_normal_t *n, unsigned int tex) {
     const enum r3_verts_tag vt = m->verts_tag;
     glUseProgram(sh_cnt.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_cnt.u_mvp, 1, GL_FALSE, mvp.val);
+    glUniformMatrix4fv(sh_cnt.u_mvp, 1, GL_FALSE, mvp->val);
     glUniformMatrix3fv(sh_cnt.u_normal, 1, 0, n->mv.val);
     glUniform3fv(sh_cnt.u_light_position, 1, n->light_position.val);
     glUniform3fv(sh_cnt.u_ambient, 1, n->ambient_color.val);
@@ -1150,17 +1149,17 @@ void r3_render_range_nt(const r3_mesh_t *m,
 }
 
 void r3_render_nt(const r3_mesh_t *m,
-        m4f mvp, const r3_normal_t *n, unsigned int tex) {
+        const m4f *mvp, const r3_normal_t *n, unsigned int tex) {
     r3_render_range_nt(m, 0, m->num_indices - 1, mvp, n, tex);
 }
 
 void r3_render_range_cnt(const r3_mesh_t *m,
         int start_idx, int end_idx,
-        m4f mvp, const r3_normal_t *n, unsigned int tex) {
+        const m4f *mvp, const r3_normal_t *n, unsigned int tex) {
     const enum r3_verts_tag vt = m->verts_tag;
     glUseProgram(sh_cnt.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_cnt.u_mvp, 1, GL_FALSE, mvp.val);
+    glUniformMatrix4fv(sh_cnt.u_mvp, 1, GL_FALSE, mvp->val);
     glUniformMatrix3fv(sh_cnt.u_normal, 1, 0, n->mv.val);
     glUniform3fv(sh_cnt.u_light_position, 1, n->light_position.val);
     glUniform3fv(sh_cnt.u_ambient, 1, n->ambient_color.val);
@@ -1196,18 +1195,18 @@ void r3_render_range_cnt(const r3_mesh_t *m,
 }
 
 void r3_render_cnt(const r3_mesh_t *m,
-        m4f mvp, const r3_normal_t *n, unsigned int tex) {
+        const m4f *mvp, const r3_normal_t *n, unsigned int tex) {
         r3_render_range_cnt(m, 0, m->num_indices - 1, mvp, n, tex);
 }
 
 void r3_render_range_knt(const r3_mesh_t *m,
         int start_idx, int end_idx,
-        m4f mvp, v3f kolor, const r3_normal_t *n, unsigned int tex) {
+        const m4f *mvp, const v3f *kolor, const r3_normal_t *n, unsigned int tex) {
     const enum r3_verts_tag vt = m->verts_tag;
     glUseProgram(sh_knt.program);
     // Set uniforms
-    glUniformMatrix4fv(sh_knt.u_mvp, 1, GL_FALSE, mvp.val);
-    glUniform3fv(sh_knt.u_kolor, 1, kolor.val);
+    glUniformMatrix4fv(sh_knt.u_mvp, 1, GL_FALSE, mvp->val);
+    glUniform3fv(sh_knt.u_kolor, 1, kolor->val);
     glUniformMatrix3fv(sh_knt.u_normal, 1, 0, n->mv.val);
     glUniform3fv(sh_knt.u_light_position, 1, n->light_position.val);
     glUniform3fv(sh_knt.u_ambient, 1, n->ambient_color.val);
@@ -1239,7 +1238,7 @@ void r3_render_range_knt(const r3_mesh_t *m,
 }
 
 void r3_render_knt(const r3_mesh_t *m,
-        m4f mvp, v3f kolor, const r3_normal_t *n, unsigned int tex) {
+        const m4f *mvp, const v3f *kolor, const r3_normal_t *n, unsigned int tex) {
     r3_render_range_knt(m, 0, m->num_indices - 1, mvp, kolor, n, tex);
 }
 

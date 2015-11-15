@@ -50,20 +50,21 @@ int main()
                 normal.mv = m3m4f(mv);
 
                 r3_viewport();
-                r3_clear(_v3f(.2,.3,.3), R3_CLEAR_BIT_COLOR | R3_CLEAR_BIT_DEPTH);
+                const v3f clear_color = _v3f(.2, .3, .3);
+                r3_clear(&clear_color, R3_CLEAR_BIT_COLOR | R3_CLEAR_BIT_DEPTH);
 
                 switch (mode) {
-                case 0: r3_render_k(r3_cube_mesh(), mvp, kolor); break;
-                case 1: r3_render_c(r3_cube_mesh(), mvp); break;
-                case 2: r3_render_n(r3_cube_mesh(), mvp, &normal); break;
-                case 3: r3_render_t(r3_cube_mesh(), mvp, tex); break;
-                case 4: r3_render_kn(r3_cube_mesh(), mvp, kolor, &normal); break;
-                case 5: r3_render_cn(r3_cube_mesh(), mvp, &normal); break;
-                case 6: r3_render_kt(r3_cube_mesh(), mvp, kolor, tex); break;
-                case 7: r3_render_ct(r3_cube_mesh(), mvp, tex); break;
-                case 8: r3_render_nt(r3_cube_mesh(), mvp, &normal, tex); break;
-                case 9: r3_render_knt(r3_cube_mesh(), mvp, kolor, &normal, tex); break;
-                case 10: r3_render_cnt(r3_cube_mesh(), mvp, &normal, tex); break;
+                case 0: r3_render_k(r3_cube_mesh(), &mvp, &kolor); break;
+                case 1: r3_render_c(r3_cube_mesh(), &mvp); break;
+                case 2: r3_render_n(r3_cube_mesh(), &mvp, &normal); break;
+                case 3: r3_render_t(r3_cube_mesh(), &mvp, tex); break;
+                case 4: r3_render_kn(r3_cube_mesh(), &mvp, &kolor, &normal); break;
+                case 5: r3_render_cn(r3_cube_mesh(), &mvp, &normal); break;
+                case 6: r3_render_kt(r3_cube_mesh(), &mvp, &kolor, tex); break;
+                case 7: r3_render_ct(r3_cube_mesh(), &mvp, tex); break;
+                case 8: r3_render_nt(r3_cube_mesh(), &mvp, &normal, tex); break;
+                case 9: r3_render_knt(r3_cube_mesh(), &mvp, &kolor, &normal, tex); break;
+                case 10: r3_render_cnt(r3_cube_mesh(), &mvp, &normal, tex); break;
                 default: break;
                 }
                 r3_render();

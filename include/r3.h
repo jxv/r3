@@ -152,7 +152,7 @@ typedef struct r3_normal {
 //
 
 bool r3_init(const char *title, v2i dim);
-void r3_clear(v3f color, r3_clear_bit_t bits);
+void r3_clear(const v3f *color, r3_clear_bit_t bits);
 void r3_render();
 void r3_quit();
 
@@ -173,29 +173,29 @@ void r3_make_mesh_from_spec(const r3_spec_t *spec, r3_mesh_t *m);
 const r3_mesh_t *r3_cube_mesh();
 const r3_mesh_t *r3_quad_mesh();
 
-void r3_render_range_c(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp);
-void r3_render_range_k(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, v3f kolor);
-void r3_render_range_n(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
-void r3_render_range_cn(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *);
-void r3_render_range_kn(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, v3f kolor, const r3_normal_t *);
-void r3_render_range_t(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
-void r3_render_range_ct(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, unsigned int tex);
-void r3_render_range_kt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, v3f kolor, unsigned int tex);
-void r3_render_range_nt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
-void r3_render_range_cnt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, const r3_normal_t *, unsigned int tex);
-void r3_render_range_knt(const r3_mesh_t *m, int start_idx, int end_idx, m4f mvp, v3f kolor, const r3_normal_t *, unsigned int tex);
+void r3_render_range_c(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp);
+void r3_render_range_k(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, const v3f *kolor);
+void r3_render_range_n(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, const r3_normal_t *);
+void r3_render_range_cn(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, const r3_normal_t *);
+void r3_render_range_kn(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, const v3f *kolor, const r3_normal_t *);
+void r3_render_range_t(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, unsigned int tex);
+void r3_render_range_ct(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, unsigned int tex);
+void r3_render_range_kt(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, const v3f *kolor, unsigned int tex);
+void r3_render_range_nt(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_range_cnt(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_range_knt(const r3_mesh_t *m, int start_idx, int end_idx, const m4f *mvp, const v3f *kolor, const r3_normal_t *, unsigned int tex);
 
-void r3_render_c(const r3_mesh_t *m, m4f mvp);
-void r3_render_k(const r3_mesh_t *m, m4f mvp, v3f kolor);
-void r3_render_n(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
-void r3_render_cn(const r3_mesh_t *m, m4f mvp, const r3_normal_t *);
-void r3_render_kn(const r3_mesh_t *m, m4f mvp, v3f kolor, const r3_normal_t *);
-void r3_render_t(const r3_mesh_t *m, m4f mvp, unsigned int tex);
-void r3_render_ct(const r3_mesh_t *m, m4f mvp, unsigned int tex);
-void r3_render_kt(const r3_mesh_t *m, m4f mvp, v3f kolor, unsigned int tex);
-void r3_render_nt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
-void r3_render_cnt(const r3_mesh_t *m, m4f mvp, const r3_normal_t *, unsigned int tex);
-void r3_render_knt(const r3_mesh_t *m, m4f mvp, v3f kolor, const r3_normal_t *, unsigned int tex);
+void r3_render_c(const r3_mesh_t *m, const m4f *mvp);
+void r3_render_k(const r3_mesh_t *m, const m4f *mvp, const v3f *kolor);
+void r3_render_n(const r3_mesh_t *m, const m4f *mvp, const r3_normal_t *);
+void r3_render_cn(const r3_mesh_t *m, const m4f *mvp, const r3_normal_t *);
+void r3_render_kn(const r3_mesh_t *m, const m4f *mvp, const v3f *kolor, const r3_normal_t *);
+void r3_render_t(const r3_mesh_t *m, const m4f *mvp, unsigned int tex);
+void r3_render_ct(const r3_mesh_t *m, const m4f *mvp, unsigned int tex);
+void r3_render_kt(const r3_mesh_t *m, const m4f *mvp, const v3f *kolor, unsigned int tex);
+void r3_render_nt(const r3_mesh_t *m, const m4f *mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_cnt(const r3_mesh_t *m, const m4f *mvp, const r3_normal_t *, unsigned int tex);
+void r3_render_knt(const r3_mesh_t *m, const m4f *mvp, const v3f *kolor, const r3_normal_t *, unsigned int tex);
 
 void r3_render_blit_alpha(const r3_mesh_t *m,  unsigned int tex, float alpha);
 void r3_render_blit(const r3_mesh_t *m,  unsigned int tex);
