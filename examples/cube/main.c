@@ -8,7 +8,7 @@
 
 int main()
 {
-        r3_init("", _v2i(320, 240));
+        r3_init("", 320, 240);
         const float dt = 1.f / 60.f;
         const float aspect = 320.f / 240.f;
         const v3f kolor = _v3f(0.3, 0.9, 0.1);

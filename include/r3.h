@@ -151,7 +151,7 @@ typedef struct r3_normal {
 
 //
 
-bool r3_init(const char *title, v2i dim);
+bool r3_init(const char *title, int w, int h);
 void r3_clear(const v3f *color, r3_clear_bit_t bits);
 void r3_render();
 void r3_quit();

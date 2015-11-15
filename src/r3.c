@@ -74,19 +74,20 @@ void r3_render() {
     SDL_GL_SwapWindow(window);
 }
 
-bool r3_init(const char *title, v2i dim) {
+bool r3_init(const char *title, int w, int h) {
     if (!r3_sdl_init_video()) {
         return false;
     }
     r3_sdl_set_gl_attributes();
-    if (!(window = r3_sdl_create_window(title, dim.x, dim.y))) {
+    if (!(window = r3_sdl_create_window(title, w, h))) {
         return false;
     }
     if (!r3_sdl_create_gl_context()) {
         SDL_DestroyWindow(window);
         return false;
     }
-    window_dim = dim;
+    window_dim.x = w;
+    window_dim.y = h;
     r3_load_shaders();
     r3_make_cube();
     r3_make_quad();
