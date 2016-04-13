@@ -6,7 +6,7 @@
 
 #include "r3_private.h"
 
-struct r3_spec *r3_create_cuboid_spec() {
+r3Spec *r3_create_cuboid_spec() {
 	const float colors[3*24] = {
 		// Red
 		1.0, 0.0, 0.0,
@@ -132,17 +132,17 @@ struct r3_spec *r3_create_cuboid_spec() {
 		20, 22, 21
 	};
 
-	char *buf = malloc(sizeof(r3_spec_t) + 24 * sizeof(r3_cnt_t) + 36 * sizeof(unsigned short int));
-	struct r3_spec *spec = (void*)buf;
+	char *buf = malloc(sizeof(r3Spec) + 24 * sizeof(r3CNT) + 36 * sizeof(unsigned short int));
+	r3Spec *spec = (void*)buf;
 	spec->verts.tag = R3_VERTS_CNT;
 	spec->verts.len = 24;
-	spec->verts.data = (void*) (sizeof(struct r3_spec) + buf);
+	spec->verts.data = (void*) (sizeof(r3Spec) + buf);
 	spec->indices.tag = R3_INDICES_USHORT;
 	spec->indices.len = 36;
-	spec->indices.data = (void*)(24 * sizeof(r3_cnt_t) + sizeof(struct r3_spec) + buf);
+	spec->indices.data = (void*)(24 * sizeof(r3CNT) + sizeof(r3Spec) + buf);
 
 	for (int i = 0; i < 24; i++) {
-		spec->verts.cnt[i] = (r3_cnt_t) {
+		spec->verts.cnt[i] = (r3CNT) {
 			.position = _v3f(positions[i*3+0], positions[i*3+1], positions[i*3+2]),
 			.color = _v3f(colors[i*3+0], colors[i*3+1], colors[i*3+2]),
 			.normal = _v3f(normals[i*3+0], normals[i*3+1], normals[i*3+2]),

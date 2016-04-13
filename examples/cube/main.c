@@ -13,7 +13,7 @@ int main()
         const float aspect = 320.f / 240.f;
         const v3f kolor = _v3f(0.3, 0.9, 0.1);
 
-        r3_normal_t normal = {
+        r3Normal normal = {
             .mv = eyem3f(),
             .light_position = _v3f(.25, .25, .25),
             .ambient_color = _v3f(.0, .0, .0),

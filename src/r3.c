@@ -11,7 +11,7 @@
 SDL_Window *window;
 v2i window_dim = {.x = 0, .y = 0};
 SDL_GLContext context;
-struct r3_mesh cube_mesh, quad_mesh;
+r3Mesh cube_mesh, quad_mesh;
 
 static bool r3_sdl_init_video()
 {
@@ -546,7 +546,7 @@ void r3_load_shaders() {
     make_sh_light();
 }
 
-void r3_clear(const v3f *color, r3_clear_bit_t bits) {
+void r3_clear(const v3f *color, r3ClearBit bits) {
     glClearColor(color->x, color->y, color->z, 1);
     glClear(bits);
 }
@@ -717,23 +717,23 @@ unsigned int r3_load_program_from_path(const char *vert_path, const char *frag_p
     return r3_make_program(vert, frag);
 }
 
-ssize_t r3_verts_tag_sizeof(r3_verts_tag_t tag) {
+ssize_t r3_verts_tag_sizeof(r3VertsTag tag) {
     switch (tag) {
-    case R3_VERTS_C: return sizeof(r3_c_t);
-    case R3_VERTS_N: return sizeof(r3_n_t);
-    case R3_VERTS_CN: return sizeof(r3_cn_t);
-    case R3_VERTS_T: return sizeof(r3_t_t);
-    case R3_VERTS_NT: return sizeof(r3_nt_t);
-    case R3_VERTS_CNT: return sizeof(r3_cnt_t);
+    case R3_VERTS_C: return sizeof(r3C);
+    case R3_VERTS_N: return sizeof(r3N);
+    case R3_VERTS_CN: return sizeof(r3CN);
+    case R3_VERTS_T: return sizeof(r3T);
+    case R3_VERTS_NT: return sizeof(r3NT);
+    case R3_VERTS_CNT: return sizeof(r3CNT);
     }
     assert(false);
 }
 
-ssize_t r3_verts_sizeof(const struct r3_verts *verts) {
+ssize_t r3_verts_sizeof(const r3Verts *verts) {
     return verts->len * r3_verts_tag_sizeof(verts->tag);
 }
 
-ssize_t r3_indices_tag_sizeof(enum r3_indices_tag tag) {
+ssize_t r3_indices_tag_sizeof(r3IndicesTag tag) {
     switch (tag) {
     case R3_INDICES_USHORT: return sizeof(unsigned int short);
     case R3_INDICES_UINT: return sizeof(unsigned int);
@@ -741,11 +741,11 @@ ssize_t r3_indices_tag_sizeof(enum r3_indices_tag tag) {
     assert(false);
 }
 
-ssize_t r3_indices_sizeof(const struct r3_indices *indices) {
+ssize_t r3_indices_sizeof(const r3Indices *indices) {
     return indices->len * r3_indices_tag_sizeof(indices->tag);
 }
 
-void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m) {
+void r3_make_mesh_from_spec(const r3Spec *spec, r3Mesh *m) {
     glGenBuffers(1, &m->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
     glBufferData(GL_ARRAY_BUFFER, r3_verts_sizeof(&spec->verts), spec->verts.data, GL_STATIC_DRAW);
@@ -758,26 +758,26 @@ void r3_make_mesh_from_spec(const struct r3_spec *spec, struct r3_mesh *m) {
 
 void r3_make_cube() {
     // TODO: clean up later
-    struct r3_spec *spec = r3_create_cuboid_spec();
+    r3Spec *spec = r3_create_cuboid_spec();
     r3_make_mesh_from_spec(spec, &cube_mesh);
     free(spec);
 }
 
 void r3_make_quad() {
-    r3_t_t verts[4] = {
-        (r3_t_t) {
+    r3T verts[4] = {
+        (r3T) {
             .position = _v3f(-1, 1, 1),
             .texcoord = _v2f(0, 1)
         },
-        (struct r3_t) {
+        (r3T) {
             .position = _v3f(-1,-1, 1),
             .texcoord = _v2f(0, 0)
         },
-        (struct r3_t) {
+        (r3T) {
             .position = _v3f( 1, 1, 1),
             .texcoord = _v2f(1, 1)
         },
-        (struct r3_t) {
+        (r3T) {
             .position = _v3f( 1,-1, 1),
             .texcoord = _v2f(1, 0)
         },
@@ -786,7 +786,7 @@ void r3_make_quad() {
         0, 1, 2,
         1, 3, 2,
     };
-    struct r3_spec spec;
+    r3Spec spec;
     spec.verts.tag = R3_VERTS_T;
     spec.verts.len = 4;
     spec.verts.t = verts;
@@ -823,7 +823,7 @@ unsigned int r3_make_fbo_tex(int width, int height) {
 
 /*
 // TODO: Delete this after all effects are reimplemented
-static void render_drawable(const struct r3_mesh *m, const struct r3_shader *sh, int flags)
+static void render_drawable(const r3Mesh *m, const struct r3_shader *sh, int flags)
 {
     glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
     glEnableVertexAttribArray(sh->attrib.position);
@@ -848,10 +848,10 @@ static void render_drawable(const struct r3_mesh *m, const struct r3_shader *sh,
 }
 */
 
-void r3_render_range_c(const r3_mesh_t *m, 
+void r3_render_range_c(const r3Mesh *m, 
         int start_idx, int end_idx,
         const m4f *mvp) {
-    const enum r3_verts_tag vt = m->verts_tag;
+    const r3VertsTag vt = m->verts_tag;
     glUseProgram(sh_c.program);
     // Set uniforms
     glUniformMatrix4fv(sh_c.u_mvp, 1, GL_FALSE, mvp->val);
@@ -872,15 +872,15 @@ void r3_render_range_c(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_c(const r3_mesh_t *m,
+void r3_render_c(const r3Mesh *m,
         const m4f *mvp) {
     r3_render_range_c(m, 0, m->num_indices - 1, mvp);
 }
 
-void r3_render_range_k(const r3_mesh_t *m, 
+void r3_render_range_k(const r3Mesh *m, 
         int start_idx, int end_idx,
         const m4f *mvp, const v3f *kolor) {
-    const enum r3_verts_tag vt = m->verts_tag;
+    const r3VertsTag vt = m->verts_tag;
     glUseProgram(sh_k.program);
     // Set uniforms
     glUniformMatrix4fv(sh_k.u_mvp, 1, GL_FALSE, mvp->val);
@@ -898,14 +898,14 @@ void r3_render_range_k(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_k(const r3_mesh_t *m,
+void r3_render_k(const r3Mesh *m,
         const m4f *mvp, const v3f *kolor) {
         r3_render_range_k(m, 0, m->num_indices - 1, mvp, kolor);
 }
 
-void r3_render_range_n(const r3_mesh_t *m,
+void r3_render_range_n(const r3Mesh *m,
         int start_idx, int end_idx,
-        const m4f *mvp, const r3_normal_t *n) {
+        const m4f *mvp, const r3Normal *n) {
     glUseProgram(sh_n.program);
     // Set uniforms
     glUniformMatrix4fv(sh_n.u_mvp, 1, GL_FALSE, mvp->val);
@@ -932,15 +932,15 @@ void r3_render_range_n(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_n(const r3_mesh_t *m,
-        const m4f *mvp, const r3_normal_t *n) {
+void r3_render_n(const r3Mesh *m,
+        const m4f *mvp, const r3Normal *n) {
     r3_render_range_n(m, 0, m->num_indices - 1, mvp, n);
 }
 
-void r3_render_range_t(const r3_mesh_t *m,
+void r3_render_range_t(const r3Mesh *m,
         int start_idx, int end_idx,
         const m4f *mvp, unsigned int tex) {
-    const enum r3_verts_tag vt = m->verts_tag;
+    const r3VertsTag vt = m->verts_tag;
     glUseProgram(sh_t.program);
     // Set uniforms
     glUniformMatrix4fv(sh_t.u_mvp, 1, GL_FALSE, mvp->val);
@@ -965,14 +965,14 @@ void r3_render_range_t(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_t(const r3_mesh_t *m,
+void r3_render_t(const r3Mesh *m,
         const m4f *mvp, unsigned int tex) {
     r3_render_range_t(m, 0, m->num_indices - 1, mvp, tex);
 }
 
-void r3_render_range_cn(const r3_mesh_t *m,
+void r3_render_range_cn(const r3Mesh *m,
         int start_idx, int end_idx,
-        const m4f *mvp, const r3_normal_t *n) {
+        const m4f *mvp, const r3Normal *n) {
     glUseProgram(sh_cn.program);
     // Set uniforms
     glUniformMatrix4fv(sh_cn.u_mvp, 1, GL_FALSE, mvp->val);
@@ -1001,14 +1001,14 @@ void r3_render_range_cn(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_cn(const r3_mesh_t *m,
-        const m4f *mvp, const r3_normal_t *n) {
+void r3_render_cn(const r3Mesh *m,
+        const m4f *mvp, const r3Normal *n) {
     r3_render_range_cn(m, 0, m->num_indices - 1, mvp, n);
 }
 
-void r3_render_range_kn(const r3_mesh_t *m,
+void r3_render_range_kn(const r3Mesh *m,
         int start_idx, int end_idx,
-        const m4f *mvp, const v3f *kolor, const r3_normal_t *n) {
+        const m4f *mvp, const v3f *kolor, const r3Normal *n) {
     glUseProgram(sh_kn.program);
     // Set uniforms
     glUniformMatrix4fv(sh_kn.u_mvp, 1, GL_FALSE, mvp->val);
@@ -1035,16 +1035,16 @@ void r3_render_range_kn(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_kn(const r3_mesh_t *m,
-        const m4f *mvp, const v3f *kolor, const r3_normal_t *n) {
+void r3_render_kn(const r3Mesh *m,
+        const m4f *mvp, const v3f *kolor, const r3Normal *n) {
     r3_render_range_kn(m, 0, m->num_indices - 1, mvp, kolor, n);
 }
 
 
-void r3_render_range_ct(const r3_mesh_t *m,
+void r3_render_range_ct(const r3Mesh *m,
         int start_idx, int end_idx,
         const m4f *mvp, unsigned int tex) {
-    const enum r3_verts_tag vt = m->verts_tag;
+    const r3VertsTag vt = m->verts_tag;
     glUseProgram(sh_ct.program);
     // Set uniforms
     glUniformMatrix4fv(sh_ct.u_mvp, 1, GL_FALSE, mvp->val);
@@ -1073,15 +1073,15 @@ void r3_render_range_ct(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_ct(const r3_mesh_t *m,
+void r3_render_ct(const r3Mesh *m,
         const m4f *mvp, unsigned int tex) {
     r3_render_range_ct(m, 0, m->num_indices - 1, mvp, tex);
 }
 
-void r3_render_range_kt(const r3_mesh_t *m,
+void r3_render_range_kt(const r3Mesh *m,
         int start_idx, int end_idx,
         const m4f *mvp, const v3f *kolor, unsigned int tex) {
-    const enum r3_verts_tag vt = m->verts_tag;
+    const r3VertsTag vt = m->verts_tag;
     glUseProgram(sh_kt.program);
     // Set uniforms
     glUniformMatrix4fv(sh_kt.u_mvp, 1, GL_FALSE, mvp->val);
@@ -1107,15 +1107,15 @@ void r3_render_range_kt(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_kt(const r3_mesh_t *m,
+void r3_render_kt(const r3Mesh *m,
         const m4f *mvp, const v3f *kolor, unsigned int tex) {
     r3_render_range_kt(m, 0, m->num_indices - 1, mvp, kolor, tex);
 }
 
-void r3_render_range_nt(const r3_mesh_t *m,
+void r3_render_range_nt(const r3Mesh *m,
         int start_idx, int end_idx,
-        const m4f *mvp, const r3_normal_t *n, unsigned int tex) {
-    const enum r3_verts_tag vt = m->verts_tag;
+        const m4f *mvp, const r3Normal *n, unsigned int tex) {
+    const r3VertsTag vt = m->verts_tag;
     glUseProgram(sh_cnt.program);
     // Set uniforms
     glUniformMatrix4fv(sh_cnt.u_mvp, 1, GL_FALSE, mvp->val);
@@ -1149,15 +1149,15 @@ void r3_render_range_nt(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_nt(const r3_mesh_t *m,
-        const m4f *mvp, const r3_normal_t *n, unsigned int tex) {
+void r3_render_nt(const r3Mesh *m,
+        const m4f *mvp, const r3Normal *n, unsigned int tex) {
     r3_render_range_nt(m, 0, m->num_indices - 1, mvp, n, tex);
 }
 
-void r3_render_range_cnt(const r3_mesh_t *m,
+void r3_render_range_cnt(const r3Mesh *m,
         int start_idx, int end_idx,
-        const m4f *mvp, const r3_normal_t *n, unsigned int tex) {
-    const enum r3_verts_tag vt = m->verts_tag;
+        const m4f *mvp, const r3Normal *n, unsigned int tex) {
+    const r3VertsTag vt = m->verts_tag;
     glUseProgram(sh_cnt.program);
     // Set uniforms
     glUniformMatrix4fv(sh_cnt.u_mvp, 1, GL_FALSE, mvp->val);
@@ -1195,15 +1195,15 @@ void r3_render_range_cnt(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_cnt(const r3_mesh_t *m,
-        const m4f *mvp, const r3_normal_t *n, unsigned int tex) {
+void r3_render_cnt(const r3Mesh *m,
+        const m4f *mvp, const r3Normal *n, unsigned int tex) {
         r3_render_range_cnt(m, 0, m->num_indices - 1, mvp, n, tex);
 }
 
-void r3_render_range_knt(const r3_mesh_t *m,
+void r3_render_range_knt(const r3Mesh *m,
         int start_idx, int end_idx,
-        const m4f *mvp, const v3f *kolor, const r3_normal_t *n, unsigned int tex) {
-    const enum r3_verts_tag vt = m->verts_tag;
+        const m4f *mvp, const v3f *kolor, const r3Normal *n, unsigned int tex) {
+    const r3VertsTag vt = m->verts_tag;
     glUseProgram(sh_knt.program);
     // Set uniforms
     glUniformMatrix4fv(sh_knt.u_mvp, 1, GL_FALSE, mvp->val);
@@ -1238,12 +1238,12 @@ void r3_render_range_knt(const r3_mesh_t *m,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void r3_render_knt(const r3_mesh_t *m,
-        const m4f *mvp, const v3f *kolor, const r3_normal_t *n, unsigned int tex) {
+void r3_render_knt(const r3Mesh *m,
+        const m4f *mvp, const v3f *kolor, const r3Normal *n, unsigned int tex) {
     r3_render_range_knt(m, 0, m->num_indices - 1, mvp, kolor, n, tex);
 }
 
-void r3_blit_alpha_render(const struct r3_mesh *m, unsigned int tex, float alpha) {
+void r3_blit_alpha_render(const r3Mesh *m, unsigned int tex, float alpha) {
     glUseProgram(sh_blit_alpha.program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -1262,7 +1262,7 @@ void r3_blit_alpha_render(const struct r3_mesh *m, unsigned int tex, float alpha
         (void*)r3_offset(m->verts_tag, R3_TEXCOORD));
 }
 
-void r3_texcoord_render(const struct r3_mesh *m, GLint a_position, GLint a_texcoord) {
+void r3_texcoord_render(const r3Mesh *m, GLint a_position, GLint a_texcoord) {
     // position    
     glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
     glEnableVertexAttribArray(sh_blit.a_position);
@@ -1283,7 +1283,7 @@ void r3_texcoord_render(const struct r3_mesh *m, GLint a_position, GLint a_texco
     glDisableVertexAttribArray(sh_blit.a_texcoord);
 }
 
-void r3_render_blit_alpha(const struct r3_mesh *m, unsigned int tex, float alpha) {
+void r3_render_blit_alpha(const r3Mesh *m, unsigned int tex, float alpha) {
     glUseProgram(sh_blit_alpha.program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -1293,7 +1293,7 @@ void r3_render_blit_alpha(const struct r3_mesh *m, unsigned int tex, float alpha
     r3_texcoord_render(m, sh_blit_alpha.a_position, sh_blit_alpha.a_texcoord);
 }
 
-void r3_render_blit(const struct r3_mesh *m, unsigned int tex) {
+void r3_render_blit(const r3Mesh *m, unsigned int tex) {
     glUseProgram(sh_blit.program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,tex);
@@ -1302,7 +1302,7 @@ void r3_render_blit(const struct r3_mesh *m, unsigned int tex) {
     r3_texcoord_render(m, sh_blit.a_position, sh_blit.a_texcoord);
 }
 
-void r3_render_blur_width(const struct r3_mesh *m, unsigned int tex, float aspect, float width) {
+void r3_render_blur_width(const r3Mesh *m, unsigned int tex, float aspect, float width) {
     glUseProgram(sh_gaussian.program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,tex);
@@ -1312,7 +1312,7 @@ void r3_render_blur_width(const struct r3_mesh *m, unsigned int tex, float aspec
     r3_texcoord_render(m, sh_gaussian.a_position, sh_gaussian.a_texcoord);
 }
 
-void r3_render_blur_height(const struct r3_mesh *m, unsigned int tex, float aspect, float height) {
+void r3_render_blur_height(const r3Mesh *m, unsigned int tex, float aspect, float height) {
     glUseProgram(sh_gaussian.program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,tex);
@@ -1322,7 +1322,7 @@ void r3_render_blur_height(const struct r3_mesh *m, unsigned int tex, float aspe
     r3_texcoord_render(m, sh_gaussian.a_position, sh_gaussian.a_texcoord);
 }
 
-void r3_render_high_pass(const struct r3_mesh *m, unsigned int tex) {
+void r3_render_high_pass(const r3Mesh *m, unsigned int tex) {
     glUseProgram(sh_high_pass.program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,tex);
@@ -1332,7 +1332,7 @@ void r3_render_high_pass(const struct r3_mesh *m, unsigned int tex) {
 }
 
 /*
-void render_light(const struct r3_mesh *m, const struct r3_shader *sh, m4f mv, m4f mvp) {
+void render_light(const r3Mesh *m, const struct r3_shader *sh, m4f mv, m4f mvp) {
     glUseProgram(sh->program);
     glUniformMatrix4fv(sh->uniform.mvp, 1, GL_FALSE, mvp.val);
     glUniformMatrix3fv(sh->uniform.normal, 1, GL_FALSE, m3m4f(mv).val);
@@ -1387,16 +1387,16 @@ unsigned int r3_load_tga_bgr_texture(const char *path) {
     return 0;
 }
 
-void r3_remove_mesh(const struct r3_mesh *m) {
+void r3_remove_mesh(const r3Mesh *m) {
     glDeleteBuffers(1, &m->vbo);
     glDeleteBuffers(1, &m->ibo);
 }
 
-void *r3_offset_ptr(enum r3_verts_tag tag, enum r3_vert vert) {
+void *r3_offset_ptr(r3VertsTag tag, r3Vert vert) {
     return (void*)r3_offset(tag, vert);
 }
 
-ssize_t r3_offset(enum r3_verts_tag tag, enum r3_vert vert) {
+ssize_t r3_offset(r3VertsTag tag, r3Vert vert) {
     switch (tag) {
     case R3_VERTS_C:
         switch (vert) {
@@ -1468,11 +1468,11 @@ ssize_t r3_offset(enum r3_verts_tag tag, enum r3_vert vert) {
     assert(false);
 }
 
-const r3_mesh_t *r3_cube_mesh() {
+const r3Mesh *r3_cube_mesh() {
     return &cube_mesh;
 }
 
-const r3_mesh_t *r3_quad_mesh() {
+const r3Mesh *r3_quad_mesh() {
     return &quad_mesh;
 }
 

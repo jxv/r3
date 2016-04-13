@@ -13,7 +13,7 @@ unsigned int r3_make_program_from_src_unsigned(const unsigned char *vsh, int vsh
 unsigned int r3_load_program_from_path(const char *vert_path, const char *frag_path);
 
 void r3_load_shaders();
-r3_spec_t *r3_create_cuboid_spec();
+r3Spec *r3_create_cuboid_spec();
 
 void r3_make_cube();
 void r3_make_quad();
@@ -21,6 +21,6 @@ void r3_make_quad();
 extern SDL_Window *window;
 extern v2i window_dim;
 extern SDL_GLContext context;
-extern struct r3_mesh cube_mesh, quad_mesh;
+extern r3Mesh cube_mesh, quad_mesh;
 
 #endif
