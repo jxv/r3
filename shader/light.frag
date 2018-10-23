@@ -14,8 +14,8 @@ void main() {
 	vec3 e = vec3(0, 0, 1);
 	vec3 h = normalize(l + e);
 
-	float df = max(0, dot(n, l));
-	float sf = max(0, dot(n, h));
+	float df = max(0.0, dot(n, l));
+	float sf = max(0.0, dot(n, h));
 	sf = pow(sf, u_shininess);
 
 	vec3 color = u_ambient + df * u_diffuse + sf * u_specular;

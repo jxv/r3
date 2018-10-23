@@ -3,3 +3,4 @@
 *.a
 demo/r3_demo
 shader/*.h
+examples/cube/cube
